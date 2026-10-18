@@ -1,5 +1,10 @@
 # gitbrella
 
+[![ci](https://github.com/aliyilmazco/gitbrella/actions/workflows/ci.yml/badge.svg)](https://github.com/aliyilmazco/gitbrella/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/aliyilmazco/gitbrella)](https://github.com/aliyilmazco/gitbrella/releases)
+[![Go Reference](https://pkg.go.dev/badge/github.com/aliyilmazco/gitbrella.svg)](https://pkg.go.dev/github.com/aliyilmazco/gitbrella)
+[![license](https://img.shields.io/github/license/aliyilmazco/gitbrella)](LICENSE)
+
 Finds the damage that cloud sync does to git repositories, without changing
 anything and without downloading anything.
 
@@ -66,7 +71,7 @@ count only for a given client. The JSON says `"providerForced": true` then.
 
 ```
 $ gitbrella check
-gitbrella v0.1.0
+gitbrella v1.0.0
 repository: /Users/jane/Library/Mobile Documents/com~apple~CloudDocs/notes
 git dir:    /Users/jane/Library/Mobile Documents/com~apple~CloudDocs/notes/.git
 sync:       icloud
@@ -95,32 +100,40 @@ exec gitbrella check
 
 A damaged repository blocks the commit; a healthy one commits as usual. The
 tool knows git is running the hook and does not mistake the commit's own lock
-for a stale one. For commit hooks (git passes them `GIT_INDEX_FILE`, or an
-absolute `GIT_DIR`) it finds the repository from the git process that ran the
-hook, so the hook may change directory first: into the git directory, its
-hooks directory, or a directory outside any repository. When git names the
-repository with an absolute `GIT_DIR` (linked worktrees, submodules,
-separate git directories), every git command in the hook acts on it wherever
-the hook goes, and so does the check. Otherwise it looks where git itself
-would land from the current directory (the git directory a relative
-`GIT_DIR` names there, or the repository found from there): if that is
-another repository or another worktree of the same one (a hook that changes
-into it, or the commit-message editor), it refuses (exit 2) rather than
-answer for the wrong one. It also reads `GIT_INDEX_FILE` when it names a
+for a stale one.
+
+**Which repository is checked.** For commit hooks (git passes them
+`GIT_INDEX_FILE`, or an absolute `GIT_DIR`) it finds the repository from the
+git process that ran the hook, so the hook may change directory first: into
+the git directory, its hooks directory, or a directory outside any
+repository. When git names the repository with an absolute `GIT_DIR` (linked
+worktrees, submodules, separate git directories), every git command in the
+hook acts on it wherever the hook goes, and so does the check. Otherwise it
+looks where git itself would land from the current directory (the git
+directory a relative `GIT_DIR` names there, or the repository found from
+there): if that is another repository or another worktree of the same one (a
+hook that changes into it, or the commit-message editor), it refuses (exit 2)
+rather than answer for the wrong one.
+
+Run without a path, it checks the repository git exported to the hook
+(`GIT_DIR`), so `--git-dir` dotfiles setups and git directories inside their
+own worktree work too. It also honours a `GIT_DIR` set in your shell when no
+path is given; unlike git, it ignores a `GIT_DIR` that does not exist and
+refuses a linked worktree it cannot trace back, rather than taking the current
+directory as the working tree.
+
+**The index the commit records.** It reads `GIT_INDEX_FILE` when it names a
 file inside the git directory, as git sets it for commit hooks: if the index
 the commit records was missing or empty, or no longer lists a HEAD file that
 is still in the working tree, the commit is blocked before it can record
 those files as deleted. An index file you point `GIT_INDEX_FILE` at elsewhere
 yourself is not read: in a hook the repository's own index is checked
-instead, and a check run by hand with it set refuses (exit 2). To stop tracking a file you keep on disk (`git rm --cached`,
-untracking a directory you now ignore), commit with `--no-verify`. Run without a path, it checks the
-repository git exported to the hook (`GIT_DIR`), so `--git-dir` dotfiles
-setups and git directories inside their own worktree work too (it also
-honours a `GIT_DIR` set in your shell when no path is given; unlike git, it
-ignores a `GIT_DIR` that does not exist and refuses a linked worktree it
-cannot trace back, rather than taking the current directory as the working
-tree). To commit a deliberate "delete everything" while your files are still
-on disk (`git rm -r --cached .`), skip the hook with `git commit --no-verify`.
+instead, and a check run by hand with it set refuses (exit 2).
+
+**Deliberate removals.** To stop tracking a file you keep on disk
+(`git rm --cached`, untracking a directory you now ignore), or to commit a
+deliberate "delete everything" while your files are still on disk
+(`git rm -r --cached .`), skip the hook with `git commit --no-verify`.
 
 ### With a hook manager
 
@@ -153,56 +166,59 @@ their hooks. It reads the event the agent passes on stdin:
   command that writes (commit, add, reset, rebase, push, and anything not
   known to only read) and a write into `.git` stop the call (exit 2, the
   reason on stderr for the agent). Reading, editing your files, `git restore`
-  and `gitbrella` itself go on, so the damage can be looked at and
-  repaired. Where git's files exist only in the cloud, or git cannot use the
-  repository at all (a renamed `HEAD`, a `.git` file pointing nowhere),
-  every git command stops: it would hang, or act on an enclosing repository.
-  Writes into `.git` go on there: that repair is done by hand inside `.git`,
-  as the reason says (`mv '.git/HEAD 2' .git/HEAD`).
-  The repository checked is the one holding the files the call works on (a
-  Codex patch names its own; a path inside `.git` counts for the working tree
-  above it). For a shell command it is the session's folder and every folder
-  its git commands run in (`cd DIR`, `pushd`, `git -C DIR`, `--git-dir`,
-  `--work-tree`, `GIT_DIR`, `env -C`, `bash -c '…'`), the writing ones first,
-  at most five; when a writing one does not fit, the call goes through with a
-  notice. Each folder is judged by what the call does there: from a damaged
-  session folder, `git -C ../sound commit` goes on. A folder that is no repository, and a bare one, pass quietly.
-  Anything else that keeps the check from running (including the 20-second
-  `--timeout`, one deadline for the whole call) lets the call through with a
-  notice; `--fail-open` does that where git cannot use the repository as
-  well. The command is read, never run: quotes, comments, subshells,
-  substitutions (also in an unquoted heredoc), heredocs, variables it sets,
-  `&&`, `||`, `if`, `case` and loops (after `cd a || cd b`, or a `cd` to a
-  folder that is not there, each folder the shell may be in counts; a `for`
-  loop is read once per value), wrappers (`timeout`, `sudo`, `nice`, `xargs`,
-  `env`), and the scripts a shell is given (`-c`, `eval`, `watch`, `source`,
-  a file, a heredoc, `bash < f`, a pipe into `sh`). Another program writing
-  inside `.git` (`rm .git/index.lock`, `> .git/HEAD`, `cd .git && rm
-  index.lock`, `sed -i` on `.git/config`, `rm -rf` or `find -delete` on a
-  folder holding `.git`, a Codex patch through the shell) counts as a write
-  into `.git`; copying `.git` away, `tar`ring it or reading it does not.
-  `gh pr checkout` and `git-lfs` count as git commands that write. A reading
-  that takes more than 5000 steps or half the `--timeout` stops, and the
-  command counts as a git command that writes in a folder it cannot tell. Where the word `git` appears in a place the reading does not follow,
-  the call counts as a git command that writes; where it cannot tell the
-  folder a git command writes to (`cd "$(…)"`, `for d in */`), the command
-  counts in every folder checked and the call gets a notice. Functions and
-  aliases the command defines are read where they are called; a script
-  piped into a shell from a program the reading does not follow
-  (`curl … | sh`) counts as a git command that writes where it runs. A shell script
-  run by its path or given to a shell (`./deploy.sh`, `bash deploy.sh`) is read
-  when it is a small file on this machine (through a symlink too, once even
-  when it runs itself); one given to a shell that is there but cannot be read
-  (too big, only in the cloud) counts as a git command that writes where it
-  runs. `make`, `npm run` and the like are
-  not read. The remedy the
-  `core.worktree` hint names (`git config --file … --unset core.worktree`) goes
-  on where every other git command stops.
+  and `gitbrella` itself go on, so the damage can be looked at and repaired.
+  - *Unusable repositories.* Where git's files exist only in the cloud, or git
+    cannot use the repository at all (a renamed `HEAD`, a `.git` file pointing
+    nowhere), every git command stops: it would hang, or act on an enclosing
+    repository. Writes into `.git` go on there: that repair is done by hand
+    inside `.git`, as the reason says (`mv '.git/HEAD 2' .git/HEAD`). The
+    remedy the `core.worktree` hint names
+    (`git config --file … --unset core.worktree`) also goes on.
+  - *Which repository.* The one holding the files the call works on (a Codex
+    patch names its own; a path inside `.git` counts for the working tree
+    above it). For a shell command it is the session's folder and every
+    folder its git commands run in (`cd DIR`, `pushd`, `git -C DIR`,
+    `--git-dir`, `--work-tree`, `GIT_DIR`, `env -C`, `bash -c '…'`), the
+    writing ones first, at most five; when a writing one does not fit, the
+    call goes through with a notice. Each folder is judged by what the call
+    does there: from a damaged session folder, `git -C ../sound commit` goes
+    on. A folder that is no repository, and a bare one, pass quietly.
+  - *When the check cannot run.* Anything that keeps the check from running
+    (including the 20-second `--timeout`, one deadline for the whole call)
+    lets the call through with a notice; `--fail-open` does that where git
+    cannot use the repository as well.
+  - *How the command is read.* It is read, never run: quotes, comments,
+    subshells, substitutions (also in an unquoted heredoc), heredocs,
+    variables it sets, `&&`, `||`, `if`, `case` and loops (after
+    `cd a || cd b`, or a `cd` to a folder that is not there, each folder the
+    shell may be in counts; a `for` loop is read once per value), wrappers
+    (`timeout`, `sudo`, `nice`, `xargs`, `env`), and the scripts a shell is
+    given (`-c`, `eval`, `watch`, `source`, a file, a heredoc, `bash < f`, a
+    pipe into `sh`). Functions and aliases the command defines are read where
+    they are called. A shell script run by its path or given to a shell
+    (`./deploy.sh`, `bash deploy.sh`) is read when it is a small file on this
+    machine (through a symlink too, once even when it runs itself). `make`,
+    `npm run` and the like are not read.
+  - *What counts as a write.* Another program writing inside `.git`
+    (`rm .git/index.lock`, `> .git/HEAD`, `cd .git && rm index.lock`,
+    `sed -i` on `.git/config`, `rm -rf` or `find -delete` on a folder holding
+    `.git`, a Codex patch through the shell) counts as a write into `.git`;
+    copying `.git` away, `tar`ring it or reading it does not. `gh pr checkout`
+    and `git-lfs` count as git commands that write.
+  - *When in doubt.* Each of these counts as a git command that writes: a
+    reading that takes more than 5000 steps or half the `--timeout` (in a
+    folder it cannot tell); the word `git` in a place the reading does not
+    follow; a script piped into a shell from a program the reading does not
+    follow (`curl … | sh`), where it runs; a script given to a shell that is
+    there but cannot be read (too big, only in the cloud), where it runs.
+    Where it cannot tell the folder a git command writes to (`cd "$(…)"`,
+    `for d in */`), the command counts in every folder checked and the call
+    gets a notice.
 - **At a session start** (`SessionStart`): one line on stdout, which the agent
   reads as context, says the repository is in a synced folder (unless its git
   directory is already outside it) and what is damaged. It never blocks.
 
-It changes nothing. Claude Code, in `.claude/settings.json`:
+The hook changes nothing. Claude Code, in `.claude/settings.json`:
 
 ```json
 {
@@ -459,8 +475,7 @@ Requires git 2.31 or newer. macOS and Linux, amd64 and arm64, no cgo.
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 
-or take an archive from the releases page (both after the first tagged
-release).
+or take an archive from the releases page.
 
 ### Verifying a release
 
@@ -556,7 +571,6 @@ binaries; the archives and SBOMs around them carry their build time.
   checked as the working tree (`WORKTREE_GUESSED`), and a hook that changed
   into another repository or into the git directory is refused (exit 2).
   Receive hooks (`pre-receive`) are not a supported gate.
-
 - `move-out`: a `.git` file is not understood by every tool. Git and tools
   that run git work; isomorphic-git (Obsidian Git on mobile) and tools that
   open `.git` as a directory do not.
@@ -573,6 +587,11 @@ binaries; the archives and SBOMs around them carry their build time.
   soon after preparing, without new commits in between.
 - `move-out` and `fix` were tried on iCloud Drive's own folder, not inside an
   app's iCloud folder (Obsidian's `iCloud~md~obsidian`).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems as
+described in [SECURITY.md](SECURITY.md), not in a public issue.
 
 ## License
 

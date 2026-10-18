@@ -1,7 +1,7 @@
 # Hooks for pre-commit (https://pre-commit.com). In .pre-commit-config.yaml:
 #
 #   - repo: https://github.com/aliyilmazco/gitbrella
-#     rev: v0.4.0
+#     rev: v1.0.0
 #     hooks:
 #       - id: gitbrella          # pre-commit builds it with Go
 #     # or  - id: gitbrella-system # the gitbrella on PATH

@@ -1,0 +1,54 @@
+name: Bug report
+description: gitbrella reported something wrong, missed damage, or failed.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, and what you got.
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Output
+      description: >
+        The output of `gitbrella check --json` (or of the command that failed).
+        Replace private paths and names if you need to.
+      render: json
+  - type: input
+    id: version
+    attributes:
+      label: gitbrella version
+      placeholder: gitbrella v1.0.0
+    validations:
+      required: true
+  - type: input
+    id: git
+    attributes:
+      label: git version
+      placeholder: git version 2.47.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and architecture
+      placeholder: macOS 15.1, arm64
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Sync client
+      options:
+        - iCloud Drive
+        - Dropbox
+        - OneDrive
+        - Google Drive
+        - Syncthing
+        - Nextcloud / ownCloud
+        - Other / none
+    validations:
+      required: true
