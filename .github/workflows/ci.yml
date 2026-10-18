@@ -24,7 +24,12 @@ jobs:
           for t in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
             GOOS=${t%/*} GOARCH=${t#*/} CGO_ENABLED=0 go build -o /dev/null ./cmd/gitbrella
           done
-      - run: go test -race ./...
+      - run: go test -race -coverprofile=coverage.out ./...
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: coverage.out
+          flags: ${{ matrix.os }}
+          token: ${{ secrets.CODECOV_TOKEN }}
   lint:
     runs-on: ubuntu-24.04
     steps:
