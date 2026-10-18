@@ -73,6 +73,7 @@ sync:       icloud
 
 DAMAGE INDEX_COPY  index 2
        icloud conflict copy of index
+       repair: 'gitbrella fix' repairs it
        equalsHEAD: true
        kind: icloud
        original: index
