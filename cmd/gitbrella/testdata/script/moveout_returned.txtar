@@ -1,0 +1,36 @@
+# After a move, the sync client may bring the old .git directory back: two
+# git directories then exist. The check reads this device's journal, reports
+# it as damage, and a commit hook stops. A move killed half way leaves no .git:
+# the check says so and names the command that finishes it.
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+exitcode 0 move-out --apply --watch 0
+mkdir $WORK/aside
+mv .git $WORK/aside/gitfile
+exec sh $WORK/bring-back.sh
+exitcode 1 check
+stdout 'DAMAGE GIT_DIR_RETURNED'
+stdout 'two git directories exist'
+
+cp $WORK/hook .git/hooks/pre-commit
+chmod 755 .git/hooks/pre-commit
+exec sh -c 'echo x >> a.md'
+! exec git -c user.name=t -c user.email=t@example.invalid commit -qam oops
+stderr 'GIT_DIR_RETURNED'
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one
+-- bring-back.sh --
+# the sync client restores the old directory: copy of the backup
+set -e
+b=$(ls -d "$WORK"/Library/Application\ Support/gitbrella/backups/*/dotgit "$WORK"/.local/state/gitbrella/backups/*/dotgit 2>/dev/null | head -1)
+cp -R "$b" .git
+-- hook --
+#!/bin/sh
+exec gitbrella check

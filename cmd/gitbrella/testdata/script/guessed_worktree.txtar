@@ -1,0 +1,45 @@
+# GIT_DIR without a working tree, run where no git process ran it (a client
+# that runs hooks itself, after the hook changed directory): git would take the
+# current directory as the working tree. When HEAD's files are not there, that
+# guess is not this repository's checkout, so the checks that look at the
+# working tree are skipped and said so, in both directions.
+exec git init -q -b main --separate-git-dir $WORK/sep.git r
+cp src/a r/a
+exec git -C r add a
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git init -q -b main --separate-git-dir $WORK/n/.git.nosync n
+cp src/a n/a
+exec git -C n add a
+exec git -C n -c user.name=t -c user.email=t@example.invalid commit -q -m init
+mkdir shared
+
+# from an ancestor of the git directory: no false GIT_DIR_NOT_IGNORED
+env GIT_DIR=$WORK/sep.git
+env GIT_INDEX_FILE=$WORK/sep.git/index
+exitcode 0 check
+! stdout 'GIT_DIR_NOT_IGNORED'
+stdout 'INFO   WORKTREE_GUESSED'
+
+# from an unrelated directory: an unignored .git.nosync is reported as
+# unchecked rather than passed in silence
+cd shared
+env GIT_DIR=$WORK/n/.git.nosync
+env GIT_INDEX_FILE=$WORK/n/.git.nosync/index
+exitcode 0 check
+stdout 'INFO   WORKTREE_GUESSED'
+
+# from its own checkout git finds the git directory through .git: no guess
+cd $WORK/n
+exitcode 1 check
+stdout 'DAMAGE GIT_DIR_NOT_IGNORED  .git.nosync'
+! stdout 'WORKTREE_GUESSED'
+
+# without that .git file the working tree is a guess again; HEAD's files are
+# here, so it holds and the damage is found
+rm $WORK/n/.git
+exitcode 1 check
+stdout 'DAMAGE GIT_DIR_NOT_IGNORED  .git.nosync'
+! stdout 'WORKTREE_GUESSED'
+
+-- src/a --
+a

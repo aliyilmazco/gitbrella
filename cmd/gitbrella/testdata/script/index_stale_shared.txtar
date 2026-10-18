@@ -1,0 +1,37 @@
+# A split index turned off leaves sharedindex.* behind, and a sync client can
+# add copies of one. Whether the index is split is read from the index itself
+# (its link extension): an index with no files and no link blocks the commit.
+exec git init -q -b main r
+cp src/a r/a
+cp src/b r/b
+exec git -C r add a b
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C r update-index --split-index
+exec git -C r update-index --no-split-index
+cp src/a 'r/.git/sharedindex.junk 2'
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+exec git -C r read-tree --empty
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m oops
+stderr 'DAMAGE INDEX_EMPTY'
+
+stderr 'DAMAGE COPY_IN_GITDIR  sharedindex.junk 2'
+
+# a real split index whose split part lists nothing is not empty
+rm 'r/.git/sharedindex.junk 2'
+exec git -C r reset -q
+exec git -C r update-index --split-index
+cp src/c r/c
+exec git -C r add c
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m two
+! stderr 'INDEX_EMPTY'
+
+-- hook --
+#!/bin/sh
+exec gitbrella check
+-- src/a --
+a
+-- src/b --
+b
+-- src/c --
+c

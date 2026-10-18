@@ -1,0 +1,27 @@
+# When HEAD resolves but its files cannot be listed (its tree is not in a
+# partial clone, git timed out), the index cannot be compared with it: that
+# is reported as unverified damage, never as "no problems".
+exec git init -q -b main r
+cp files/a r/a
+cp files/b r/b
+exec git -C r add a b
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m init
+rm r/.git/index
+exec git -C r add a
+mkdir fake
+cp fakegit fake/git
+chmod 755 fake/git
+env PATH=$WORK/fake:$PATH
+exitcode 1 check r
+stdout 'DAMAGE INDEX_SHRUNK'
+stdout 'verified: false'
+
+-- fakegit --
+#!/bin/sh
+# ls-tree of HEAD fails, as when the tree is missing from a partial clone
+case " $* " in *" ls-tree "*" HEAD"*) echo "fatal: not a tree object" >&2; exit 128;; esac
+PATH="${PATH#"$WORK/fake:"}" exec git "$@"
+-- files/a --
+a
+-- files/b --
+b

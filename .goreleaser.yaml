@@ -1,0 +1,63 @@
+# GoReleaser v2 (https://goreleaser.com/customization/). Nothing here
+# publishes on its own: the release workflow runs it for a pushed v* tag and
+# leaves the GitHub release a draft for a person to check and publish;
+# 'goreleaser release --snapshot --clean' builds the same files into dist/ and
+# uploads nothing.
+version: 2
+
+project_name: gitbrella
+
+builds:
+  - id: gitbrella
+    main: ./cmd/gitbrella
+    binary: gitbrella
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version=v{{ .Version }}
+    # the commit's time, not the build's: the same tag builds the same
+    # binaries (the archives and SBOMs around them carry their build time)
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+# One file to sign and attest: it names every archive and SBOM with its
+# SHA-256 (the signature is not in it).
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+# An SBOM (Syft, SPDX JSON) for each archive.
+sboms:
+  - artifacts: archive
+
+# Keyless: cosign signs with the workflow's OIDC identity and writes one
+# bundle (certificate and signature) beside the checksum file.
+signs:
+  - cmd: cosign
+    signature: "${artifact}.sigstore.json"
+    args:
+      - sign-blob
+      - "--bundle=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: checksum
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+changelog:
+  use: git
+  sort: asc
+
+release:
+  draft: true
+  # a re-run for the same tag replaces its draft instead of adding another
+  replace_existing_draft: true
+  prerelease: auto

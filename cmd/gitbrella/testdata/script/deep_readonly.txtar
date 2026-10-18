@@ -1,0 +1,46 @@
+# --deep runs git fsck, which reads the index of every worktree: reading a
+# split index refreshes its sharedindex file, and reading a sparse index can
+# write tree objects. There fsck is skipped and said so; nothing changes.
+[!git240] skip 'sparse-checkout --sparse-index needs a recent git'
+
+# split index, shared file aged so a refresh would show
+exec sh mk.sh split
+exec git -C split update-index --split-index
+exec sh -c 'touch -t 202001010000 split/.git/sharedindex.*'
+snapshot save split.json split
+exitcode 0 check --deep split
+stdout 'INFO   DEEP_CHECK_SKIPPED'
+snapshot same split.json split
+
+# sparse index with a staged change
+exec sh mk.sh sparse
+exec git -C sparse sparse-checkout set --cone --sparse-index src
+exec sh -c 'echo more >> sparse/src/f1'
+exec git -C sparse add src/f1
+snapshot save sparse.json sparse
+exitcode 0 check --deep sparse
+stdout 'INFO   DEEP_CHECK_SKIPPED'
+snapshot same sparse.json sparse
+
+# a linked worktree with a split index, checked from the main worktree
+exec sh mk.sh main
+exec git -C main worktree add -q ../wt -b side
+exec git -C wt update-index --split-index
+exec sh -c 'touch -t 202001010000 main/.git/worktrees/wt/sharedindex.*'
+snapshot save main.json main
+exitcode 0 check --deep main
+stdout 'INFO   DEEP_CHECK_SKIPPED'
+snapshot same main.json main
+
+# a plain repository still gets fsck
+exec sh mk.sh plain
+exitcode 0 check --deep plain
+! stdout 'DEEP_CHECK_SKIPPED'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src" "$1/docs"
+for i in 1 2 3; do echo "$i" > "$1/src/f$i"; echo "$i" > "$1/docs/d$i"; done
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init

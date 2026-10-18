@@ -1,0 +1,7 @@
+# Agents and hooks run the check from inside the repository. The tool must not
+# count itself as a live git process.
+fixture stale-lock repo
+cd repo
+exitcode 1 check
+stdout 'DAMAGE STALE_LOCK  refs/heads/main.lock'
+! stdout 'GIT_RUNNING'

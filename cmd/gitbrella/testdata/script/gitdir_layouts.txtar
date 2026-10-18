@@ -1,0 +1,19 @@
+# .git moved out of the synced folder behind a gitfile: the safe layout.
+fixture gitdir-outside out
+exitcode 0 check --provider icloud out
+stdout 'INFO   GIT_DIR_NOT_SYNCED'
+! stdout 'IN_CLOUD_FOLDER'
+
+# .git.nosync inside the working tree and not ignored: 'git add -A' would
+# commit git's own files. The check reports it and changes nothing.
+fixture nosync-unignored nos
+snapshot save before.json nos
+exitcode 1 check --provider icloud nos
+stdout 'DAMAGE GIT_DIR_NOT_IGNORED  .git.nosync'
+stdout 'INFO   GIT_DIR_NOT_SYNCED'
+snapshot same before.json nos
+
+# The same layout with the exclude entry is fine.
+fixture nosync-ignored nosi
+exitcode 0 check --provider icloud nosi
+! stdout 'GIT_DIR_NOT_IGNORED'

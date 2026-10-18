@@ -1,0 +1,51 @@
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-26]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - run: git version
+      - run: go vet ./...
+      - run: GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go vet ./...
+      - run: |
+          for t in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
+            GOOS=${t%/*} GOARCH=${t#*/} CGO_ENABLED=0 go build -o /dev/null ./cmd/gitbrella
+          done
+      - run: go test -race ./...
+  oldest-git:
+    # git 2.31 is the oldest the tool accepts; tests that need a newer git skip
+    runs-on: ubuntu-24.04
+    env:
+      GIT_VERSION: 2.31.8
+      GIT_SHA256: d2443e368b1394858a1040bd74dacfba46bce2cf3410ef3bc5089a703fc91e9a
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: build git ${{ env.GIT_VERSION }}
+        run: |
+          sudo apt-get update -q && sudo apt-get install -q -y zlib1g-dev
+          curl -fsSL -o git.tar.gz "https://mirrors.edge.kernel.org/pub/software/scm/git/git-$GIT_VERSION.tar.gz"
+          echo "$GIT_SHA256  git.tar.gz" | sha256sum -c -
+          mkdir "$RUNNER_TEMP/git-src" && tar -xzf git.tar.gz -C "$RUNNER_TEMP/git-src" --strip-components=1 && rm git.tar.gz
+          make -C "$RUNNER_TEMP/git-src" -j"$(nproc)" prefix="$RUNNER_TEMP/git" \
+            NO_GETTEXT=1 NO_TCLTK=1 NO_PERL=1 NO_PYTHON=1 NO_OPENSSL=1 NO_CURL=1 NO_EXPAT=1 NO_INSTALL_HARDLINKS=1 install
+          echo "$RUNNER_TEMP/git/bin" >> "$GITHUB_PATH"
+      - run: git version
+      - run: go test ./...

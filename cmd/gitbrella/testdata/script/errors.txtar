@@ -1,0 +1,9 @@
+# Not a repository and bad flags exit 2 with a message.
+mkdir empty
+exitcode 2 check empty
+stderr 'not a git repository'
+exitcode 2 check repo extra
+stderr 'at most one path'
+exec git init -q --bare bare.git
+exitcode 2 check bare.git
+stderr 'bare repositories are not supported'

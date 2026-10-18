@@ -1,0 +1,16 @@
+# Split index: git refreshes sharedindex.* timestamps whenever it reads the
+# index. The check must leave them alone, both for the .git.nosync probe and
+# for index copies compared with HEAD.
+fixture nosync-ignored nosi
+exec git -C nosi update-index --split-index
+snapshot save before.json nosi
+exitcode 0 check nosi
+snapshot same before.json nosi
+
+fixture clean sp
+exec git -C sp update-index --split-index
+cp sp/.git/index 'sp/.git/index 2'
+snapshot save before2.json sp
+exitcode 1 check sp
+stdout 'DAMAGE INDEX_COPY  index 2'
+snapshot same before2.json sp

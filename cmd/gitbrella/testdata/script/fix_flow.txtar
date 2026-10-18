@@ -1,0 +1,35 @@
+# fix: plan, repair, rescue, undo. A ref copy ahead of its branch holds the
+# only pointer to a commit: fix keeps it as refs/gcd-rescue/... before moving
+# the copy into the backup.
+fixture ref-copy-newer r
+cd r
+exitcode 1 check
+stdout 'DAMAGE REF_COPY'
+
+# planning changes nothing
+snapshot save $WORK/before.json .
+exitcode 0 fix
+stdout 'RESCUE-REF'
+stdout 'QUARANTINE'
+stdout '^planned\.'
+snapshot same $WORK/before.json .
+
+exitcode 0 fix --apply --watch 0
+stdout '^done\.'
+stdout 'refs/gcd-rescue/heads/main-2'
+exitcode 0 check
+! exists '.git/refs/heads/main 2'
+exec git rev-parse --verify refs/gcd-rescue/heads/main-2
+
+# a second fix has nothing to do
+exitcode 0 fix
+stdout '^already\.'
+
+# undo puts the copy back and removes the rescue ref
+exitcode 0 undo --apply
+stdout 'unfix'
+stdout '^done\.'
+exists '.git/refs/heads/main 2'
+! exec git rev-parse --verify -q refs/gcd-rescue/heads/main-2
+exitcode 1 check
+stdout 'DAMAGE REF_COPY'

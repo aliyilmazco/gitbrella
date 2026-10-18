@@ -1,0 +1,6 @@
+# Files that other tools (for example a note-sync script) keep in .git are info, never damage.
+fixture third-party repo
+exitcode 0 check repo
+stdout 'INFO   UNKNOWN_IN_GITDIR  notesync.lock'
+stdout 'INFO   UNKNOWN_IN_GITDIR  notesync-transactions'
+! stdout 'STALE_LOCK'

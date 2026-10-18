@@ -1,0 +1,5 @@
+# Checking from a linked worktree scans the shared git dir.
+fixture linked-worktree wt
+exitcode 1 check wt
+stdout 'DAMAGE INDEX_COPY  index 2'
+stdout 'otherWorktree: true'

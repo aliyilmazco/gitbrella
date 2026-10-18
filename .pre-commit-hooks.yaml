@@ -1,0 +1,26 @@
+# Hooks for pre-commit (https://pre-commit.com). In .pre-commit-config.yaml:
+#
+#   - repo: https://github.com/aliyilmazco/gitbrella
+#     rev: v0.4.0
+#     hooks:
+#       - id: gitbrella          # pre-commit builds it with Go
+#     # or  - id: gitbrella-system # the gitbrella on PATH
+#
+# The check looks at the whole repository, not at the staged files, so it
+# runs on every commit and takes no file names.
+- id: gitbrella
+  name: gitbrella
+  description: Stop a commit in a git repository a cloud sync client damaged.
+  entry: gitbrella check
+  language: golang
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit]
+- id: gitbrella-system
+  name: gitbrella (installed binary)
+  description: The same check, with gitbrella already on PATH.
+  entry: gitbrella check
+  language: system
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit]

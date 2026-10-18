@@ -1,0 +1,29 @@
+# An older index brought back lists as a file (or symlink) a path that is a
+# directory of files in HEAD, outside the cone. Outside the cone nothing is
+# on disk, so the missing path is no sign that the disk agrees with the type
+# change: the files below it must count as dropped.
+exec sh mk.sh r
+exec sh -c 'cd r && git rm -q out/thing && mkdir -p out/thing && echo 1 > out/thing/one && git add -A && git -c user.name=t -c user.email=t@example.invalid commit -q -m dir'
+exec git -C r sparse-checkout init --cone
+exec git -C r sparse-checkout set src
+! exists r/out
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+cp old-index r/.git/index
+exec sh -c 'echo e >> r/src/s'
+exec git -C r add src
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m oops
+stderr 'DAMAGE INDEX_SHRUNK'
+stderr 'out/thing/one'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src" "$1/out"
+echo s > "$1/src/s"; echo r > "$1/README"; echo f > "$1/out/thing"
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m file
+cp "$1/.git/index" old-index
+-- hook --
+#!/bin/sh
+exec gitbrella check

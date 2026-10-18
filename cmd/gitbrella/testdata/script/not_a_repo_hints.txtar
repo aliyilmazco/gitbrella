@@ -1,0 +1,10 @@
+# A .git file whose git directory is gone, as after removing a linked
+# worktree: not a repository, and the tool says why.
+exitcode 2 check wt
+stderr 'not a git repository'
+stderr 'hint: .git points to /nonexistent-gcd/main/.git/worktrees/feat, which does not exist'
+
+-- wt/.git --
+gitdir: /nonexistent-gcd/main/.git/worktrees/feat
+-- wt/a.md --
+a

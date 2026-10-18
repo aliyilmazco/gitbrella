@@ -1,0 +1,29 @@
+# One folder, two spellings: an unfinished change started from one is found
+# and recovered from the other, and the lock is shared (on a disk that takes
+# NOTES for notes).
+[!caseinsensitive] skip 'needs a case-insensitive disk'
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+env GITBRELLA_FAILPOINT=planned
+! exec gitbrella move-out --apply --watch 0
+env GITBRELLA_FAILPOINT=
+cd ../NOTES
+exitcode 1 move-out
+stdout 'REFUSED UNFINISHED_CHANGE'
+exitcode 0 move-out --apply --watch 0
+stdout 'RECOVERED move-out .*: rolled back'
+stdout '^recovered\.'
+exists .git/HEAD
+exitcode 0 move-out --apply --watch 0
+stdout '^done\.'
+exitcode 0 check
+stdout 'GIT_DIR_NOT_SYNCED'
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one

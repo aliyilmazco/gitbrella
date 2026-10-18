@@ -1,0 +1,31 @@
+# A sparse checkout left in cone mode but given hand-written patterns: git
+# itself stops treating them as cone directories. The check reads no
+# patterns, so files the patterns leave out count as dropped.
+exec sh mk.sh r
+exec git -C r sparse-checkout init --cone
+exec git -C r sparse-checkout set src
+cp patterns r/.git/info/sparse-checkout
+exec git -C r sparse-checkout reapply
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+rm r/.git/index
+exec git -C r add -A
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m oops
+stderr 'DAMAGE INDEX_SHRUNK'
+stderr 'docs/t1.txt'
+
+-- patterns --
+/*
+!/*/
+/src/
+/docs/*.md
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src" "$1/docs"
+for i in 1 2 3; do echo "$i" > "$1/src/s$i"; echo "$i" > "$1/docs/d$i.md"; echo "t$i" > "$1/docs/t$i.txt"; done
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

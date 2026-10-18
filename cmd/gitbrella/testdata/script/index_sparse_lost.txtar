@@ -1,0 +1,42 @@
+# In a sparse checkout, files outside the sparse set are missing from disk on
+# purpose, so their absence says nothing about a deliberate deletion: an index
+# that lost them blocks the commit.
+exec sh mk.sh r
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+
+# the sparse set holds nothing, and the index is emptied
+exec git -C r sparse-checkout init --cone
+exec git -C r sparse-checkout set nothing_here
+exec git -C r read-tree --empty
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m oops
+stderr 'DAMAGE INDEX_EMPTY'
+
+# the sparse set holds src; the index is lost and one file staged again
+exec git -C r reset -q --hard
+exec git -C r sparse-checkout set src
+rm r/.git/index
+exec git -C r add src/f1
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m oops
+stderr 'DAMAGE INDEX_SHRUNK'
+exec git -C r ls-tree -r --name-only HEAD
+stdout '^docs/d3$'
+
+# deleting files inside the sparse set on purpose cannot be told from a lost
+# index there: blocked, and --no-verify commits it
+exec git -C r reset -q
+exec git -C r rm -r -q src
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m 'remove src'
+stderr 'DAMAGE INDEX_SHRUNK'
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q --no-verify -m 'remove src'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src" "$1/docs"
+for i in 1 2 3; do echo "$i" > "$1/src/f$i"; echo "$i" > "$1/docs/d$i"; done
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

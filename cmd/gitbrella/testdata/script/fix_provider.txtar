@@ -1,0 +1,21 @@
+# A copy name that counts only under a given provider (OneDrive's
+# index-COMPUTER outside a detected OneDrive folder): check --provider names
+# the fix that sees it, and fix repairs it only with the same provider.
+fixture clean r
+cd r
+cp .git/index .git/index-MacBookPro
+exitcode 1 check --provider onedrive
+stdout 'DAMAGE INDEX_COPY  index-MacBookPro'
+stdout 'repair: ''gitbrella fix --provider onedrive'' repairs it'
+exitcode 1 check --provider onedrive --json
+stdout '"providerForced": true'
+
+exitcode 0 fix
+stdout '^already\.'
+exitcode 0 fix --provider onedrive --apply --watch 0
+stdout '^done\.'
+! exists .git/index-MacBookPro
+exitcode 0 check --provider onedrive
+
+exitcode 2 fix --provider bogus
+stderr 'unknown provider "bogus"'

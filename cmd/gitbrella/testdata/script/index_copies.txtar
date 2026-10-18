@@ -1,0 +1,8 @@
+# iCloud conflict copies of the index are damage; the check changes nothing.
+fixture index-copies repo
+snapshot save before.json repo
+exitcode 1 check repo
+stdout 'DAMAGE INDEX_COPY  index 2'
+stdout 'DAMAGE INDEX_COPY  index 3'
+stdout 'equalsHEAD: true'
+snapshot same before.json repo

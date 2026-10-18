@@ -1,0 +1,20 @@
+# An index copy is compared with HEAD through a private temporary copy. When
+# the temporary directory lies inside the repository, that copy would be
+# written there: the comparison is skipped instead, and nothing changes.
+fixture index-copies r
+snapshot save before.json r
+env TMPDIR=$WORK/r
+exitcode 1 check r
+stdout 'DAMAGE INDEX_COPY'
+stdout 'equalsHEAD: unknown'
+snapshot same before.json r
+env TMPDIR=$WORK/r/.git
+exitcode 1 check r
+stdout 'equalsHEAD: unknown'
+snapshot same before.json r
+
+# the same directory spelled in another case (APFS ignores case)
+env TMPDIR=$WORK/R/.GIT
+exitcode 1 check r
+stdout 'equalsHEAD: unknown'
+snapshot same before.json r

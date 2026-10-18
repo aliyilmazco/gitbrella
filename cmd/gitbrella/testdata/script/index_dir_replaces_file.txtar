@@ -1,0 +1,23 @@
+# A file deleted on purpose and a directory made under its name (on a
+# case-insensitive disk, under the same name in another case): the file is
+# not on disk any more, so committing its deletion loses nothing.
+exec sh mk.sh r
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+exec git -C r rm -q a
+mkdir r/a
+exec sh -c 'echo n > r/a/new'
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m 'a is a directory now'
+! stderr 'INDEX_SHRUNK'
+exec git -C r ls-tree -r --name-only HEAD
+! stdout '^a$'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+echo a > "$1/a"; echo b > "$1/b"
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

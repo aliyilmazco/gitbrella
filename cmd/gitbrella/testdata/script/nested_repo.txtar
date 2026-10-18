@@ -1,0 +1,10 @@
+# A repository inside another one whose .git git cannot use (here: HEAD gone,
+# as when iCloud evicts or renames it). git would quietly answer for the outer
+# repository; the check refuses and says which .git it found.
+fixture clean outer
+fixture clean outer/inner
+mv outer/inner/.git/HEAD outer/inner/.git/HEAD.moved
+exitcode 2 check outer/inner
+stderr 'not a git repository'
+stderr 'inner/.git'
+stderr 'hint: .*has no HEAD'

@@ -1,0 +1,12 @@
+# Every provider the detector knows can be forced from the command line.
+fixture clean repo
+exitcode 0 check --provider onedrive repo
+stdout 'sync:       onedrive'
+stdout 'INFO   IN_CLOUD_FOLDER'
+exitcode 0 check --provider google-drive repo
+exitcode 0 check --provider icloud-desktop-documents repo
+exitcode 0 check --provider cloud-storage repo
+exitcode 2 check --provider box repo
+stderr 'unknown provider "box"'
+exitcode 0 help
+stdout 'onedrive'

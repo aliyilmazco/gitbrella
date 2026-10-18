@@ -1,0 +1,33 @@
+# index.skipHash (on with feature.manyFiles, which git recommends for large
+# repositories) writes no checksum. Such an index is still read: an empty one
+# blocks the commit, and a copy of one is not called invalid.
+[!git240] skip 'index.skipHash needs git 2.40'
+exec git init -q -b main r
+exec git -C r config feature.manyFiles true
+cp src/a r/a
+cp src/b r/b
+exec git -C r add a b
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m init
+cp r/.git/index 'r/.git/index 2'
+exitcode 1 check r
+stdout 'DAMAGE INDEX_COPY  index 2'
+stdout 'validIndex: unverified'
+stdout 'equalsHEAD: true'
+! stdout 'INDEX_INVALID'
+rm 'r/.git/index 2'
+
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+exec git -C r read-tree --empty
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m oops
+stderr 'DAMAGE INDEX_EMPTY'
+exec git -C r ls-tree --name-only HEAD
+stdout '^a$'
+
+-- hook --
+#!/bin/sh
+exec gitbrella check
+-- src/a --
+a
+-- src/b --
+b

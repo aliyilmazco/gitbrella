@@ -1,0 +1,34 @@
+# A move killed after the original went aside leaves the folder without .git.
+# A repository around it (here one in home) must not hide the unfinished
+# change, and neither must renaming the folder: both are found by inode.
+exec sh mk.sh
+exec git init -q $WORK
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+env GITBRELLA_FAILPOINT=original-moved
+! exec gitbrella move-out --apply --watch 0
+env GITBRELLA_FAILPOINT=
+! exists .git
+exitcode 1 check
+stdout 'DAMAGE CHANGE_UNFINISHED'
+stdout 'move-out --apply'
+
+cd ..
+mv notes 'notes renamed'
+cd 'notes renamed'
+exitcode 0 move-out --apply --watch 0
+stdout 'RECOVERED move-out .*: rolled back'
+stdout '^recovered\.'
+exists .git/HEAD
+exitcode 0 move-out --apply --watch 0
+stdout '^done\.'
+exec git log --oneline -1
+stdout 'one'
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one

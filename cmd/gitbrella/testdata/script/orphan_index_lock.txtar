@@ -1,0 +1,8 @@
+# A real incident: index missing, complete index.lock left behind.
+fixture orphan-index-lock repo
+snapshot save before.json repo
+exitcode 1 check --json repo
+stdout '"code": "ORPHAN_INDEX_LOCK"'
+stdout '"equalsHEAD": "true"'
+stdout '"validIndex": "true"'
+snapshot same before.json repo

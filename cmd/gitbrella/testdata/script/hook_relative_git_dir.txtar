@@ -1,0 +1,52 @@
+# A relative GIT_DIR (from the environment, or --git-dir alone: git passes it
+# on as given) names, from wherever the hook went, the git directory git itself
+# uses there. Another repository's is refused; none at all leaves the hook's.
+exec sh mk.sh
+
+# two .git.nosync siblings, the hook changes into the other one
+! exec sh -c 'cd A && GIT_DIR=.git.nosync git -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m x'
+stderr 'not the one'
+
+# a hidden nested repository in the worktree of one inside an enclosing repository
+! exec sh -c 'cd E/A && GIT_DIR=.git.nosync git -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m x'
+stderr 'not the one'
+
+# core.worktree siblings committed with --git-dir=meta/.git
+! exec sh -c 'cd M1 && git --git-dir=meta/.git -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m x'
+stderr 'not the one'
+
+# --git-dir=../.git from a subdirectory; the hook's cd .. makes it the enclosing one
+! exec sh -c 'cd E2/P/d && git --git-dir=../.git -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m x'
+stderr 'not the one'
+
+# into a subdirectory where the relative GIT_DIR names nothing: the hook's own
+exec sh -c 'cd C && GIT_DIR=.git.nosync git -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m x'
+exec sh -c 'cd C && GIT_DIR=.git.nosync git read-tree --empty'
+! exec sh -c 'cd C && GIT_DIR=.git.nosync git -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m y'
+stderr 'DAMAGE INDEX_EMPTY'
+
+-- mk.sh --
+set -e
+c() { git -c user.name=t -c user.email=t@example.invalid "$@"; }
+nosync() {
+	git init -q -b main "$1"; mv "$1/.git" "$1/.git.nosync"
+	echo /.git.nosync/ >> "$1/.git.nosync/info/exclude"
+	mkdir -p "$1/d"; echo a > "$1/a"; echo b > "$1/d/b"
+	(cd "$1" && GIT_DIR=.git.nosync git add a d && GIT_DIR=.git.nosync c commit -q -m i)
+}
+hook() { printf '#!/bin/sh\n%s || exit 1\nexec gitbrella check\n' "$2" > "$1/pre-commit"; chmod 755 "$1/pre-commit"; }
+nosync A; nosync B
+hook A/.git.nosync/hooks 'cd ../B'
+git init -q -b main E; echo '/*' > E/.git/info/exclude
+nosync E/A; nosync E/A/N; echo /N/ >> E/A/.git.nosync/info/exclude
+hook E/A/.git.nosync/hooks 'cd N'
+for r in M1 M2; do
+	mkdir $r; git init -q -b main $r/meta; git -C $r/meta config core.worktree "$PWD/$r"
+	echo /meta/ >> $r/meta/.git/info/exclude; echo a > $r/a; git -C $r/meta add ../a; c -C $r/meta commit -q -m i
+done
+hook M1/meta/.git/hooks 'cd ../M2'
+git init -q -b main E2; echo /P/ >> E2/.git/info/exclude; echo a > E2/a; git -C E2 add a; c -C E2 commit -q -m i
+git init -q -b main E2/P; mkdir E2/P/d; echo a > E2/P/a; git -C E2/P add a; c -C E2/P commit -q -m i
+hook E2/P/.git/hooks 'cd ..'
+nosync C
+hook C/.git.nosync/hooks 'cd d'

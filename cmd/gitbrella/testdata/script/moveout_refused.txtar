@@ -1,0 +1,42 @@
+# move-out refuses, with exit status 1 and the reasons, what it must not move.
+
+# not in a synced folder: nothing to move out of
+exec git init -q -b main plain
+exitcode 1 move-out plain
+stdout 'REFUSED NOT_IN_SYNCED_FOLDER'
+stdout '^refused\.'
+
+# a lock git may still hold: the copy would be inconsistent
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+cp $WORK/empty .git/index.lock
+exitcode 1 move-out --apply --watch 0
+stdout 'REFUSED REPOSITORY_BUSY'
+stdout 'LOCK_RECENT'
+exists .git/HEAD
+rm .git/index.lock
+
+# submodules: their .git files point into .git
+mkdir .git/modules
+exitcode 1 move-out --json
+stdout '"code": "SUBMODULES"'
+stdout '"result": "refused"'
+rm .git/modules
+
+# other damage is carried, not refused
+cp .git/index '.git/index 2'
+exitcode 0 move-out
+stdout 'CARRIED INDEX_COPY'
+
+# --prepare and --attach exclude each other
+exitcode 2 move-out --prepare --attach
+
+-- empty --
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one

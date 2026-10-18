@@ -1,0 +1,6 @@
+# A ref copy with commits the branch lacks is called out.
+fixture ref-copy-newer repo
+exitcode 1 check repo
+stdout 'DAMAGE REF_COPY  refs/heads/main 2'
+stdout 'relation: copy-newer'
+stdout 'commits the branch does not have'

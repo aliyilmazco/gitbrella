@@ -1,0 +1,35 @@
+# A move killed between moving the original aside and writing the .git file
+# leaves no .git at all. The next run sees the unfinished change, refuses to
+# plan around it, and with --apply rolls it back before moving again.
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+exec git rev-parse HEAD
+cp stdout $WORK/head
+
+env GITBRELLA_FAILPOINT=original-moved
+! exec gitbrella move-out --apply --watch 0
+! exists .git
+env GITBRELLA_FAILPOINT=
+
+exitcode 1 move-out
+stdout 'REFUSED UNFINISHED_CHANGE'
+
+exitcode 0 move-out --apply --watch 0
+stdout 'RECOVERED move-out .*: rolled back'
+stdout '^recovered\.'
+exists .git/HEAD
+exitcode 0 move-out --apply --watch 0
+stdout '^done\.'
+exec git rev-parse HEAD
+cmp stdout $WORK/head
+exec git status --porcelain
+! stdout .
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one

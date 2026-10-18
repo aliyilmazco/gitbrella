@@ -1,0 +1,6 @@
+# "note 2.md" next to "note.md" is reported; "Chapter 2.md" without an original is not.
+fixture worktree-copies repo
+exitcode 0 check repo
+stdout 'INFO   WORKTREE_COPIES  note 2.md'
+stdout 'count: 1'
+! stdout 'Chapter 2.md'

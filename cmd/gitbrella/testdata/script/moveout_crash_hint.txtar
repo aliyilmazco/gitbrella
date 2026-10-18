@@ -1,0 +1,19 @@
+# A move killed after the original went aside: no .git at all. The check
+# cannot find a repository, and says which command finishes the change.
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+env GITBRELLA_FAILPOINT=original-moved
+! exec gitbrella move-out --apply --watch 0
+env GITBRELLA_FAILPOINT=
+exitcode 2 check
+stderr 'did not finish, so .git is missing'
+stderr 'move-out --apply'
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one

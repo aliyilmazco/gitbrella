@@ -1,0 +1,41 @@
+# A shared hook that leaves the working tree (cd "$(dirname "$0")") in layouts
+# whose git directory does not point back to the working tree. The working tree
+# can then only be guessed from the current directory, so an index with no
+# files must not be excused by "HEAD's files are gone from disk".
+mkdir shared
+cp hook shared/pre-commit
+chmod 755 shared/pre-commit
+
+# --separate-git-dir (the layout this tool recommends for synced folders)
+exec git init -q -b main --separate-git-dir $WORK/sep.git sep
+cp a sep/a
+exec git -C sep add a
+exec git -C sep -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C sep config core.hooksPath $WORK/shared
+exec git -C sep rm -r --cached -q .
+! exec git -C sep -c user.name=t -c user.email=t@example.invalid commit -q -m 'delete all'
+stderr 'DAMAGE INDEX_EMPTY'
+
+# a hook that changed into another repository (core.hooksPath inside a dotfiles repo)
+exec git init -q -b main dots
+mkdir dots/hooks
+cp hook dots/hooks/pre-commit
+chmod 755 dots/hooks/pre-commit
+cp a dots/a
+exec git -C dots add a hooks
+exec git -C dots -c user.name=t -c user.email=t@example.invalid commit -q -m dots
+exec git init -q -b main plain
+cp a plain/a
+exec git -C plain add a
+exec git -C plain -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C plain config core.hooksPath $WORK/dots/hooks
+exec git -C plain rm -r --cached -q .
+! exec git -C plain -c user.name=t -c user.email=t@example.invalid commit -q -m 'delete all'
+stderr 'DAMAGE INDEX_EMPTY'
+
+-- hook --
+#!/bin/sh
+cd "$(dirname "$0")" || exit 1
+exec gitbrella check
+-- a --
+a

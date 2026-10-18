@@ -1,0 +1,41 @@
+# Paths whose type changed between HEAD and the index are excused only when
+# the disk agrees: an older index brought back can list as a file what is now
+# a directory of files on disk, and git add -A takes a repository someone
+# created inside a tracked directory as a submodule. Both would delete files
+# still on disk.
+exec sh mk.sh r
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+env C='-c user.name=t -c user.email=t@example.invalid'
+
+# notes was a file; it became a directory of notes; the old index comes back
+exec sh -c 'cd r && echo old > notes && git add notes && git $C commit -q --no-verify -m file'
+cp r/.git/index old-index
+exec sh -c 'cd r && git rm -q notes && mkdir notes && for i in 1 2 3; do echo $i > notes/n$i.md; done && git add notes && git $C commit -q --no-verify -m dir'
+cp old-index r/.git/index
+exec sh -c 'echo e >> r/src/f1'
+exec git -C r add src
+! exec sh -c 'git -C r $C commit -q -m oops'
+stderr 'DAMAGE INDEX_SHRUNK'
+stderr 'notes/n1.md'
+exec git -C r reset -q
+
+# a repository created inside a tracked directory, then the index is lost
+exec sh -c 'cd r/src && git init -q && git add . && git $C commit -q -m inner'
+rm r/.git/index
+exec git -C r add -A
+! exec sh -c 'git -C r $C commit -q -m oops'
+stderr 'DAMAGE INDEX_SHRUNK'
+stderr 'src/f1'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src"
+for i in 1 2 3; do echo "$i" > "$1/src/f$i"; done
+echo a > "$1/a"
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

@@ -1,0 +1,24 @@
+# Two names for one inode are not a rename: a hard-linked backup staged after
+# the index was lost leaves the originals on disk under their own names, and
+# the commit must not delete them. (Case-only and NFD/NFC renames are still
+# the same name after case folding and NFC.)
+exec sh mk.sh r
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+exec sh -c 'cd r && mkdir backup && ln src/a backup/a && ln src/b backup/b'
+rm r/.git/index
+exec git -C r add backup
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m oops
+stderr 'DAMAGE INDEX_SHRUNK'
+stderr 'src/a'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src"
+echo 1 > "$1/src/a"; echo 2 > "$1/src/b"
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

@@ -1,0 +1,6 @@
+# iCloud renamed .git: not a repository any more, but the tool explains why.
+fixture clean repo
+mv repo/.git 'repo/.git 2'
+exitcode 2 check repo
+stderr 'not a git repository'
+stderr 'hint: ".git 2" here looks like a renamed or copied git directory'

@@ -1,0 +1,30 @@
+# A sparse index stands for whole directories by their tree. An older copy of
+# it brought back by a sync client names older trees: a commit from it would
+# delete the files added since, outside the sparse set.
+[!git240] skip 'needs sparse-checkout --sparse-index'
+exec sh mk.sh r
+exec git -C r sparse-checkout set --cone --sparse-index src
+cp r/.git/index old-index
+exec git -C r sparse-checkout add docs
+exec sh -c 'cd r && echo 4 > docs/d4 && echo 5 > docs/d5 && git add docs && git -c user.name=t -c user.email=t@example.invalid commit -q -m more'
+exec git -C r sparse-checkout set --cone --sparse-index src
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+cp old-index r/.git/index
+exec sh -c 'echo x >> r/src/f1'
+exec git -C r add src/f1
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m oops
+stderr 'DAMAGE INDEX_SHRUNK'
+exec git -C r ls-tree -r --name-only HEAD
+stdout '^docs/d5$'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src" "$1/docs"
+for i in 1 2 3; do echo "$i" > "$1/src/f$i"; echo "$i" > "$1/docs/d$i"; done
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

@@ -1,0 +1,32 @@
+# No hand editing: patterns set in non-cone mode, then 'sparse-checkout init
+# --cone' turns cone mode on and keeps them. git warns and keeps matching
+# them as non-cone patterns, so README and a stay off disk. A lost index drops
+# them; the commit must be blocked.
+[!git235] skip 'needs sparse-checkout set --no-cone'
+exec sh mk.sh r
+exec git -C r sparse-checkout set --no-cone 'src/' 'docs/'
+exec git -C r sparse-checkout init --cone
+exec git -C r config --get core.sparseCheckoutCone
+stdout true
+! exists r/README
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+rm r/.git/index
+exec git -C r add -A
+exec sh -c 'echo e >> r/src/f1'
+exec git -C r add src
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m oops
+stderr 'DAMAGE INDEX_SHRUNK'
+stderr 'README'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src" "$1/docs"
+for i in 1 2 3; do echo "$i" > "$1/src/f$i"; echo "$i" > "$1/docs/d$i.md"; done
+echo a > "$1/a"; echo r > "$1/README"
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

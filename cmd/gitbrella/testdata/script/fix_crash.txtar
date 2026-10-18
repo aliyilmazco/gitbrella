@@ -1,0 +1,33 @@
+# A fix killed after its steps, before the closing check: check reports the
+# unfinished change; the next fix --apply rolls it back and stops there; the
+# one after repairs.
+fixture clean r
+rm r/.git/index
+cd r
+env GITBRELLA_FAILPOINT=applied
+! exec gitbrella fix --apply --watch 0
+env GITBRELLA_FAILPOINT=
+exitcode 1 check
+stdout 'DAMAGE CHANGE_UNFINISHED'
+stdout 'gitbrella fix --apply'
+exitcode 0 fix --apply --watch 0
+stdout 'RECOVERED fix .*: rolled back$'
+stdout '^recovered\.'
+exitcode 1 check
+stdout 'DAMAGE INDEX_MISSING'
+exitcode 0 fix --apply --watch 0
+stdout '^done\.'
+exitcode 0 check
+
+# Killed again, and git rewrites the rebuilt index before the recovery: the
+# recovery keeps the index git wrote, says so, and ends.
+rm .git/index
+env GITBRELLA_FAILPOINT=applied
+! exec gitbrella fix --apply --watch 0
+env GITBRELLA_FAILPOINT=
+exec git update-index -q --refresh
+exitcode 1 fix --apply --watch 0
+stdout 'RECOVERED fix .*: rolled back except: rebuild-index .*git used it'
+stdout 'WARNING the fix .* was reversed only in part'
+stdout '^recovered\.'
+exitcode 0 check

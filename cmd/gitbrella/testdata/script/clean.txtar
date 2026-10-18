@@ -1,0 +1,7 @@
+# A healthy repository has no findings and the check changes nothing.
+fixture clean 'repo with space'
+snapshot save before.json 'repo with space'
+exitcode 0 check 'repo with space'
+stdout 'No problems found.'
+stdout '0 damage, 0 info. gitbrella changed nothing.'
+snapshot same before.json 'repo with space'

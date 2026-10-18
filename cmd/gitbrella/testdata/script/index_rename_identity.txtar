@@ -1,0 +1,15 @@
+# Re-indexing a repository whose names are stored decomposed (NFD, as
+# committed on Linux or by libgit2) records them composed on macOS: a rename
+# of the same files, not a loss. The same for a case-only rename.
+exec git init -q -b main r
+exec sh -c 'cd r && for n in a b c; do printf x > "$(printf "$n\314\210")"; done && git -c core.precomposeUnicode=false add -A && git -c core.precomposeUnicode=false -c user.name=t -c user.email=t@example.invalid commit -q -m nfd'
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+exec git -C r rm -r -q --cached .
+exec git -C r add -A
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m reindex
+! stderr 'INDEX_SHRUNK'
+
+-- hook --
+#!/bin/sh
+exec gitbrella check

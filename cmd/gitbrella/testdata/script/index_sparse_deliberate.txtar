@@ -1,0 +1,42 @@
+# In a sparse checkout no rule tells a deliberate deletion from a lost index:
+# git's sparse patterns decide what is on disk, and modelling them let lost
+# files through. Every commit that drops a tracked file there is blocked, in
+# cone mode too and whatever the directory names; --no-verify commits it.
+exec sh mk.sh r
+exec git -C r sparse-checkout init --cone
+exec git -C r sparse-checkout set 'dökümanlar'
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+
+exec git -C r rm -q 'dökümanlar/ç1'
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m 'delete'
+stderr 'DAMAGE INDEX_SHRUNK'
+stderr 'no-verify'
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q --no-verify -m 'delete'
+exec git -C r ls-tree -r --name-only HEAD
+! stdout 'ç1'
+
+exec git -C r sparse-checkout set 'Notes!'
+exec git -C r rm -q 'Notes!/x'
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m 'delete x'
+stderr 'DAMAGE INDEX_SHRUNK'
+
+# a lost index is blocked as before
+exec git -C r reset -q --hard
+rm r/.git/index
+exec sh -c 'echo n > r/Notes!/yeni'
+exec git -C r add 'Notes!/yeni'
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m oops
+stderr 'DAMAGE INDEX_SHRUNK'
+
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/dökümanlar/alt" "$1/Notes!" "$1/other"
+echo r > "$1/README"; echo 1 > "$1/dökümanlar/ç1"; echo 2 > "$1/dökümanlar/alt/ğ2"; echo o > "$1/other/o"
+echo x > "$1/Notes!/x"; echo y > "$1/Notes!/y"
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

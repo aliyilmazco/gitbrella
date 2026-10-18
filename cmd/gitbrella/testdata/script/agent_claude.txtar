@@ -1,0 +1,210 @@
+# The Claude Code hook. In a damaged repository a git command that writes, or
+# a write into .git, stops the tool call (exit 2, the reason on stderr; an
+# exit 1 would let it through). Reading, editing files and gitbrella
+# itself go on. Where git cannot use the repository (HEAD renamed by the sync
+# client) every git command stops. A sound repository and a folder that is
+# no repository pass quietly; a session start gets a line of context.
+fixture index-copies r
+fixture clean ok
+fixture clean broken
+mv broken/.git/HEAD 'broken/.git/HEAD 2'
+mkdir notrepo
+fixture clean outer
+fixture clean outer/inner
+mv outer/inner/.git/HEAD 'outer/inner/.git/HEAD 2'
+fixture clean w
+exec git config --file w/.git/config core.worktree /nonexistent-gcd/other-mac/w
+exec sh mk.sh
+
+# damage: a git write stops, reading and the repair go on
+stdin commit-r.json
+exitcode 2 hook --for claude
+stderr 'stopped before Bash'
+stderr 'INDEX_COPY'
+! stdout .
+stdin status-r.json
+exitcode 0 hook --for claude
+stdin ls-r.json
+exitcode 0 hook --for claude
+stdin restore-r.json
+exitcode 0 hook --for claude
+stdin fix-r.json
+exitcode 0 hook --for claude
+stdin edit-r.json
+exitcode 0 hook --for claude
+
+# a write into .git stops, checked at the working tree above it
+stdin gitdir-r.json
+exitcode 2 hook --for claude
+stderr 'stopped before Write'
+
+# the file the tool works on decides, not the session's folder
+stdin other-repo.json
+exitcode 2 hook --for claude
+
+# git cannot use the repository: every git command stops, with the cause
+stdin status-broken.json
+exitcode 2 hook --for claude
+stderr 'git cannot use the repository'
+stderr 'HEAD 2'
+stdin status-broken.json
+exitcode 1 hook --for claude --fail-open
+stdin ls-broken.json
+exitcode 0 hook --for claude
+
+# the folder git runs in decides: -C and cd move it into a repository git
+# cannot use, while the session's folder is a sound one around it
+stdin commit-C-inner.json
+exitcode 2 hook --for claude
+stderr 'git cannot use the repository'
+stdin commit-cd-inner.json
+exitcode 2 hook --for claude
+stdin commit-outer.json
+exitcode 0 hook --for claude
+
+# from a damaged session folder, git working on a sound repository goes on
+stdin commit-ok-from-r.json
+exitcode 0 hook --for claude
+stdin status-ok-from-broken.json
+exitcode 0 hook --for claude
+
+# the shell is read with its keywords, wrappers and quotes: git behind if or
+# timeout is seen, a cd inside a quoted message is not, and a folder inside
+# .git is its working tree
+stdin if-commit-r.json
+exitcode 2 hook --for claude
+stdin timeout-commit-r.json
+exitcode 2 hook --for claude
+stdin quoted-cd-ok.json
+exitcode 0 hook --for claude
+stdin gitdir-log-ok.json
+exitcode 0 hook --for claude
+! stderr .
+
+# Claude Code's own commit form (a heredoc in a substitution, an apostrophe
+# in the message) is read whole; a shell write into .git, a git after a
+# comment and a script a shell reads from a heredoc count; a Bash command that
+# only prints a patch marker is no patch; a git write whose folder cannot be
+# told gets a notice
+stdin template-r.json
+exitcode 2 hook --for claude
+stdin template-ok-from-r.json
+exitcode 0 hook --for claude
+stdin rm-lock-r.json
+exitcode 2 hook --for claude
+stderr 'stopped before Bash'
+stdin comment-none.json
+exitcode 2 hook --for claude
+stdin heredoc-bash-r.json
+exitcode 2 hook --for claude
+stdin marker-r.json
+exitcode 2 hook --for claude
+stdin unplaced-ok.json
+exitcode 1 hook --for claude
+stderr 'cannot tell'
+
+# another machine's core.worktree: git stops, the remedy the hint names goes on
+stdin status-w.json
+exitcode 2 hook --for claude
+stderr 'core.worktree'
+stdin remedy-w.json
+exitcode 0 hook --for claude
+
+# sound, and no repository: nothing printed
+stdin commit-ok.json
+exitcode 0 hook --for claude
+! stdout .
+! stderr .
+stdin commit-none.json
+exitcode 0 hook --for claude
+! stdout .
+! stderr .
+
+# a session start never blocks; damage and causes become context
+stdin start-r.json
+exitcode 0 hook --for claude
+stdout '^gitbrella: .*It has damage now \(INDEX_COPY'
+stdin start-broken.json
+exitcode 0 hook --for claude
+stdout 'git cannot use the repository here'
+stdin start-ok.json
+exitcode 0 hook --for claude
+! stdout .
+
+# a bare repository has no working tree: quiet
+exec git init -q --bare bare.git
+stdin log-bare.json
+exitcode 0 hook --for claude
+! stderr .
+
+# other events pass; bad input and usage mistakes only warn
+stdin post-r.json
+exitcode 0 hook --for claude
+stdin bad.json
+exitcode 1 hook --for claude
+stderr 'could not read the hook'
+exitcode 1 hook
+exitcode 1 hook --for vim
+
+# a large input is read whole
+exec sh big.sh
+stdin big.json
+exitcode 2 hook --for claude
+
+# the hook changes nothing
+snapshot save $WORK/r.json r
+stdin commit-r.json
+exitcode 2 hook --for claude
+snapshot same $WORK/r.json r
+
+-- template-r.tmpl --
+{"cwd":"@W/r","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git commit -m \"$(cat <<'EOF'\nFix the user's bug (really\n\nCo-Authored-By: x <x@example.invalid>\nEOF\n)\""}}
+-- template-ok-from-r.tmpl --
+{"cwd":"@W/r","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"cd ../ok && git commit -m \"$(cat <<'EOF'\nDon't break it\nEOF\n)\""}}
+-- rm-lock-r.tmpl --
+{"cwd":"@W/r","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"rm -f .git/index.lock"}}
+-- comment-none.tmpl --
+{"cwd":"@W/notrepo","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"cd ../r && git commit -am x # do not push yet"}}
+-- heredoc-bash-r.tmpl --
+{"cwd":"@W/r","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"bash <<'EOF'\ngit commit -am x\nEOF"}}
+-- marker-r.tmpl --
+{"cwd":"@W/r","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"printf '%s\\n' '*** Begin Patch' >/dev/null; git commit -am x"}}
+-- unplaced-ok.tmpl --
+{"cwd":"@W/ok","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"cd $SOMEWHERE && git commit -am x"}}
+-- bad.json --
+not json
+-- mk.sh --
+set -e
+ev() { printf '{"session_id":"s","cwd":"%s","hook_event_name":"%s","tool_name":"%s","tool_input":%s}\n' "$1" "$2" "$3" "$4"; }
+bash() { ev "$1" PreToolUse Bash "{\"command\":\"$2\"}"; }
+bash "$WORK/r" "git commit -m x" > commit-r.json
+bash "$WORK/r" "git status" > status-r.json
+bash "$WORK/r" "ls -la" > ls-r.json
+bash "$WORK/r" "git restore --staged a" > restore-r.json
+bash "$WORK/r" "gitbrella fix --apply" > fix-r.json
+ev "$WORK/r" PreToolUse Edit "{\"file_path\":\"$WORK/r/note.md\",\"old_string\":\"a\",\"new_string\":\"b\"}" > edit-r.json
+ev "$WORK/r" PreToolUse Write "{\"file_path\":\"$WORK/r/.git/hooks/pre-commit\",\"content\":\"x\"}" > gitdir-r.json
+ev "$WORK/notrepo" PreToolUse Write "{\"file_path\":\"$WORK/r/.git/info/exclude\",\"content\":\"x\"}" > other-repo.json
+bash "$WORK/broken" "git status" > status-broken.json
+bash "$WORK/broken" "ls" > ls-broken.json
+bash "$WORK/ok" "git commit -m x" > commit-ok.json
+bash "$WORK/outer" "git -C inner commit -m x" > commit-C-inner.json
+bash "$WORK/outer" "cd inner && git commit -m x" > commit-cd-inner.json
+bash "$WORK/outer" "git commit -m x" > commit-outer.json
+bash "$WORK/r" "git -C ../ok commit -m x" > commit-ok-from-r.json
+bash "$WORK/broken" "git -C ../ok status" > status-ok-from-broken.json
+bash "$WORK/r" "if ! git diff --quiet; then git commit -am x; fi" > if-commit-r.json
+bash "$WORK/r" "timeout 30 git commit -m x" > timeout-commit-r.json
+bash "$WORK/ok" "git commit -m 'wip; cd ../r && git push'" > quoted-cd-ok.json
+bash "$WORK/ok/.git" "git log -1" > gitdir-log-ok.json
+for f in template-r template-ok-from-r rm-lock-r comment-none heredoc-bash-r marker-r unplaced-ok; do sed "s#@W#$WORK#g" $f.tmpl > $f.json; done
+bash "$WORK/w" "git status" > status-w.json
+bash "$WORK/w" "cd / && git config --file $WORK/w/.git/config --unset core.worktree" > remedy-w.json
+bash "$WORK/notrepo" "git commit -m x" > commit-none.json
+bash "$WORK/bare.git" "git log" > log-bare.json
+ev "$WORK/r" PostToolUse Bash '{"command":"ls"}' > post-r.json
+for d in r ok broken; do printf '{"session_id":"s","cwd":"%s","hook_event_name":"SessionStart","source":"startup"}\n' "$WORK/$d" > start-$d.json; done
+-- big.sh --
+set -e
+head -c 5000000 /dev/zero | tr '\0' 'a' > pad.txt
+printf '{"cwd":"%s","hook_event_name":"PreToolUse","tool_name":"Write","tool_input":{"file_path":"%s","content":"%s"}}' "$WORK/r" "$WORK/r/.git/x" "$(cat pad.txt)" > big.json

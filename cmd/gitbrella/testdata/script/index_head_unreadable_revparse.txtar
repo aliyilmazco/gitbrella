@@ -1,0 +1,29 @@
+# ls-tree of HEAD fails and so does the rev-parse meant to tell an unborn
+# branch apart (it crashes here; a timeout takes the same path). Only a clean
+# "no such ref" means unborn: anything else is no answer, never a pass.
+exec git init -q -b main r
+cp files/a r/a
+cp files/b r/b
+exec git -C r add a b
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m init
+rm r/.git/index
+exec git -C r add a
+mkdir fake
+cp fakegit fake/git
+chmod 755 fake/git
+env PATH=$WORK/fake:$PATH
+exitcode 1 check r
+stdout 'DAMAGE INDEX_SHRUNK'
+stdout 'verified: false'
+
+-- fakegit --
+#!/bin/sh
+case " $* " in
+  *" ls-tree "*" HEAD"*) echo "fatal: not a tree object" >&2; exit 128;;
+  *" rev-parse --verify -q HEAD "*) kill -9 $$;;
+esac
+PATH="${PATH#"$WORK/fake:"}" exec git "$@"
+-- files/a --
+a
+-- files/b --
+b

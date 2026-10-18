@@ -1,0 +1,38 @@
+# git works from the physical directory, not the shell's $PWD: ".." after a
+# symlinked directory is the parent of its target, and a hook that changes
+# through a symlink into another repository is in that repository.
+exec git init -q -b main A
+cp src/a A/a
+exec git -C A add a
+exec git -C A -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git init -q -b main B
+mkdir B/d
+cp src/a B/d/b
+exec git -C B add d
+exec git -C B -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C B read-tree --empty
+
+# path mode: check .. from A/linkd -> B/d is B, as for git -C ..
+symlink A/linkd -> ../B/d
+! exec sh -c 'cd A/linkd && exec gitbrella check ..'
+stdout 'repository: .*/B$'
+stdout 'DAMAGE INDEX_EMPTY'
+
+# a hook that changes through a symlink into B's subdirectory
+mkdir links
+symlink links/bd -> ../B/d
+cp hook-link A/.git/hooks/pre-commit
+chmod 755 A/.git/hooks/pre-commit
+cp src/c A/c
+exec git -C A add c
+! exec git -C A -c user.name=t -c user.email=t@example.invalid commit -q -m two
+stderr 'not the one'
+
+-- hook-link --
+#!/bin/sh
+cd ../links/bd || exit 1
+exec gitbrella check
+-- src/a --
+a
+-- src/c --
+c

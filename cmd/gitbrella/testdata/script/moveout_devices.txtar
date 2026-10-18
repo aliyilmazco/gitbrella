@@ -1,0 +1,52 @@
+# Another device that syncs the folder: prepared before the move, it uses its
+# own copy when the .git file arrives; not prepared, it clones from a remote.
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+
+# prepared device: copy first, the .git file then finds the copy
+exitcode 0 move-out --prepare --apply
+stdout '^done\.'
+exists .git/HEAD
+exitcode 1 move-out
+stdout 'REFUSED TARGET_EXISTS'
+exec sh $WORK/arrive.sh
+exitcode 0 move-out --attach --apply
+stdout 'source: +prepared'
+exec git status --porcelain
+stdout 'M a.md'
+
+# a device that was not prepared: no copy here, so it needs --from
+exec sh $WORK/forget.sh
+exitcode 1 move-out --attach
+stdout 'REFUSED NEEDS_SOURCE'
+exitcode 0 move-out --attach --from $WORK/remote.git --apply
+stdout '^done\.'
+stdout 'git reset --mixed @\{u\}'
+exec git status --porcelain
+stdout 'M a.md'
+exec git rev-parse --abbrev-ref '@{u}'
+stdout 'origin/main'
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q --bare -b main "$WORK/remote.git"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one
+git -C "$d" remote add origin "$WORK/remote.git"
+git -C "$d" push -q -u origin main
+echo changed >> "$d/a.md"
+-- arrive.sh --
+# What the sync client does here when another device moved out: the .git
+# directory goes, the .git file comes (the same bytes on every device).
+set -e
+id=$(ls "$WORK/.local/share/gitbrella/gitdirs")
+mv .git "$WORK/deleted-by-sync"
+printf 'gitdir: ../../../../.local/share/gitbrella/gitdirs/%s\n' "$id" > .git
+-- forget.sh --
+set -e
+id=$(ls "$WORK/.local/share/gitbrella/gitdirs")
+mv "$WORK/.local/share/gitbrella/gitdirs/$id" "$WORK/other-device-copy"

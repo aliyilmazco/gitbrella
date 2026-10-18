@@ -1,0 +1,17 @@
+# An unborn branch has no files to lose: the first commit of a new
+# repository and the first commit of an orphan branch go through the hook.
+exec git init -q -b main r
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+exec sh -c 'echo a > r/a'
+exec git -C r add a
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m first
+! stderr 'DAMAGE'
+
+exec git -C r checkout -q --orphan fresh
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m 'orphan first'
+! stderr 'DAMAGE'
+
+-- hook --
+#!/bin/sh
+exec gitbrella check

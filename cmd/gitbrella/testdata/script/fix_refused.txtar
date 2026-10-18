@@ -1,0 +1,28 @@
+# fix refuses while git is mid-operation, and leaves to the user what has no
+# single right answer (an index that lost files may have been untracked on
+# purpose); damage left to the user exits 1, as check would.
+fixture merge-in-progress m
+exitcode 1 fix m
+stdout 'REFUSED REPOSITORY_BUSY'
+stdout 'IN_PROGRESS_OPERATION'
+
+exec git init -q -b main s
+exec sh -c 'cd s && echo a > a && echo b > b && git add -A && git -c user.name=t -c user.email=t@example.invalid commit -q -m one'
+rm s/.git/index
+exec git -C s add a
+exitcode 1 check s
+stdout 'DAMAGE INDEX_SHRUNK'
+stdout 'repair: by hand'
+exitcode 1 fix s
+stdout 'MANUAL  INDEX_SHRUNK'
+stdout 'git read-tree HEAD gives them back'
+stdout '^already\.'
+
+# a damaged index may still hold staged work (git may read it anyway): left
+# to the user, nothing moved
+fixture corrupt-index c
+snapshot save $WORK/c.json c
+exitcode 1 fix --apply --watch 0 c
+stdout 'MANUAL  INDEX_INVALID'
+stdout '^already\.'
+snapshot same $WORK/c.json c

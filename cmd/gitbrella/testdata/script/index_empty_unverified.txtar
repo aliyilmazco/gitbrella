@@ -1,0 +1,30 @@
+# When objects must not be read (a partial clone on git older than 2.45, which
+# would fetch), HEAD's tree cannot be listed. An index with no files on a
+# branch that has commits still blocks: reported as unverified.
+exec git init -q -b main src
+cp files/a src/a
+cp files/b src/b
+exec git -C src add a b
+exec git -C src -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C src config uploadpack.allowFilter true
+exec git clone -q --filter=blob:none file://$WORK/src r
+exec git -C r read-tree --empty
+mkdir fake
+cp fakegit fake/git
+chmod 755 fake/git
+env PATH=$WORK/fake:$PATH
+exitcode 1 check r
+stdout 'PARTIAL_CLONE_UNVERIFIED'
+stdout 'DAMAGE INDEX_EMPTY'
+stdout 'verified: false'
+
+-- fakegit --
+#!/bin/sh
+# reports git 2.40 to the tool, runs the real git otherwise
+for a do last=$a; done
+if [ "$last" = version ]; then echo "git version 2.40.0"; exit 0; fi
+PATH="${PATH#"$WORK/fake:"}" exec git "$@"
+-- files/a --
+a
+-- files/b --
+b

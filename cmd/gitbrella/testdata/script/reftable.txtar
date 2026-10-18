@@ -1,0 +1,4 @@
+[!git245] skip 'reftable needs git 2.45'
+fixture reftable repo
+exitcode 0 check repo
+stdout 'INFO   REFTABLE_UNSUPPORTED'

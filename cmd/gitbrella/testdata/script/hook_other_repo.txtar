@@ -1,0 +1,73 @@
+# Run during a commit from inside another repository (the commit-message
+# editor, or a hook that changes into it), the check must not answer for the
+# repository git is committing in: git passes GIT_INDEX_FILE=.git/index, which
+# fits both. It refuses (exit 2) instead of a silent "no damage".
+exec git init -q -b main other
+cp a other/a
+exec git -C other add a
+exec git -C other -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C other read-tree --empty
+cd other
+exitcode 1 check
+stdout 'DAMAGE INDEX_EMPTY'
+cd $WORK
+
+exec git init -q -b main plain
+cp a plain/a
+exec git -C plain add a
+exec git -C plain -c user.name=t -c user.email=t@example.invalid commit -q -m init
+
+# the editor git starts for the message
+chmod 755 editor
+cp b plain/b
+exec git -C plain add b
+env GIT_EDITOR=$WORK/editor
+exec git -C plain -c user.name=t -c user.email=t@example.invalid commit -q
+env GIT_EDITOR=
+grep 'exit=2' editor.out
+grep 'not the one' editor.out
+
+# a hook that changes into another repository
+cp hook-cd plain/.git/hooks/pre-commit
+chmod 755 plain/.git/hooks/pre-commit
+cp c plain/c
+exec git -C plain add c
+! exec git -C plain -c user.name=t -c user.email=t@example.invalid commit -q -m three
+stderr 'not the one'
+
+# ... or into a sibling linked worktree of the same repository: it shares
+# the common directory but has its own index
+exec git -C plain worktree add -q ../wt -b side
+exec git -C wt read-tree --empty
+chmod 755 editor-wt
+cp d plain/d
+exec git -C plain add d
+env GIT_EDITOR=$WORK/editor-wt
+exec git -C plain -c user.name=t -c user.email=t@example.invalid commit -q --no-verify
+env GIT_EDITOR=
+grep 'exit=2' editor-wt.out
+
+-- editor-wt --
+#!/bin/sh
+cd "$WORK/wt" || exit 1
+gitbrella check > "$WORK/editor-wt.out" 2>&1
+echo "exit=$?" >> "$WORK/editor-wt.out"
+echo msg > "$1"
+-- editor --
+#!/bin/sh
+cd "$WORK/other" || exit 1
+gitbrella check > "$WORK/editor.out" 2>&1
+echo "exit=$?" >> "$WORK/editor.out"
+echo msg > "$1"
+-- hook-cd --
+#!/bin/sh
+cd "$WORK/other" || exit 1
+exec gitbrella check
+-- a --
+a
+-- b --
+b
+-- c --
+c
+-- d --
+d

@@ -1,0 +1,57 @@
+# move-out: plan, apply, already, check, undo. HOME is $WORK, so the
+# repository below is in iCloud Drive as far as the tool can tell.
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/my notes'
+exec git status --porcelain
+cp stdout $WORK/status-before
+
+# planning changes nothing
+snapshot save $WORK/before.json .
+exitcode 0 move-out
+stdout '^move-out: '
+stdout '\.local/share/gitbrella/gitdirs/my-notes-'
+stdout '^planned\.'
+stdout 'move-out --prepare --apply'
+snapshot same $WORK/before.json .
+! exists $WORK/Library/Application' 'Support/gitbrella
+! exists $WORK/.local/state/gitbrella
+
+# the move
+exitcode 0 move-out --apply --watch 0
+stdout '^done\.'
+stdout 'original git directory is kept at'
+exec git rev-parse --absolute-git-dir
+stdout '/\.local/share/gitbrella/gitdirs/my-notes-'
+exec git status --porcelain
+cmp stdout $WORK/status-before
+exec git -c user.name=t -c user.email=t@example.invalid commit -qam 'after the move'
+
+# a second run has nothing to do; the check calls the layout safe
+exitcode 0 move-out
+stdout '^already\.'
+exitcode 0 check
+stdout 'GIT_DIR_NOT_SYNCED'
+
+# JSON for agents
+exitcode 0 undo --json
+stdout '"result": "planned"'
+stdout '"mode": "move-in"'
+
+# moving back keeps the commit made since the move
+exitcode 0 undo --apply
+stdout '^done\.'
+exec git log --oneline -1
+stdout 'after the move'
+exists .git/HEAD
+exitcode 1 undo
+stdout 'NOTHING_TO_UNDO'
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/my notes"
+mkdir -p "$d/sub dir"
+git init -q -b main "$d"
+echo a > "$d/a.md"; echo b > "$d/sub dir/b.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one
+echo changed >> "$d/a.md"

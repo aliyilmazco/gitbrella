@@ -1,0 +1,53 @@
+# A linked worktree's or a submodule's commit hook gets an absolute GIT_DIR
+# from git. It names the repository for every git command in the hook,
+# wherever the hook changes directory, so the check follows it too: a shared
+# hook that changes into the main worktree, or a submodule hook that changes
+# into the superproject, still checks the repository being committed.
+exec git init -q -b main m
+cp src/a m/a
+exec git -C m add a
+exec git -C m -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C m worktree add -q ../wt -b side
+cp hook-up m/.git/hooks/pre-commit
+chmod 755 m/.git/hooks/pre-commit
+cp src/b wt/b
+exec git -C wt add b
+exec git -C wt -c user.name=t -c user.email=t@example.invalid commit -q -m two
+stderr 'repository: .*/wt$'
+exec git -C wt read-tree --empty
+! exec git -C wt -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m oops
+stderr 'DAMAGE INDEX_EMPTY'
+exec git -C wt reset -q
+
+exec git init -q -b main subsrc
+cp src/a subsrc/a
+exec git -C subsrc add a
+exec git -C subsrc -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git init -q -b main super
+cp src/b super/b
+exec git -C super add b
+exec git -C super -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C super -c protocol.file.allow=always submodule add -q $WORK/subsrc sub
+exec git -C super -c user.name=t -c user.email=t@example.invalid commit -q -m sub
+cp hook-dotdot super/.git/modules/sub/hooks/pre-commit
+chmod 755 super/.git/modules/sub/hooks/pre-commit
+cp src/b super/sub/b
+exec git -C super/sub add b
+exec git -C super/sub -c user.name=t -c user.email=t@example.invalid commit -q -m two
+stderr 'repository: .*/super/sub$'
+exec git -C super/sub read-tree --empty
+! exec git -C super/sub -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m oops
+stderr 'DAMAGE INDEX_EMPTY'
+
+-- hook-up --
+#!/bin/sh
+cd "$(dirname "$0")/../.." || exit 1
+exec gitbrella check
+-- hook-dotdot --
+#!/bin/sh
+cd .. || exit 1
+exec gitbrella check
+-- src/a --
+a
+-- src/b --
+b

@@ -1,0 +1,5 @@
+# desktop.ini dropped by Google Drive inside refs/ and objects/ breaks git.
+fixture desktop-ini repo
+exitcode 1 check repo
+stdout 'DAMAGE FOREIGN_FILE_IN_GITDIR  objects/desktop.ini'
+stdout 'DAMAGE FOREIGN_FILE_IN_GITDIR  refs/heads/desktop.ini'

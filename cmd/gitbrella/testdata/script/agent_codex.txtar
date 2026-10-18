@@ -1,0 +1,36 @@
+# The Codex hook: the same stop for a git write in a damaged repository
+# (exit 2, reason on stderr); a patch is checked by the files it names, and
+# one into .git stops. Codex documents no other exit codes, so a warning
+# exits 0.
+fixture ref-copy-newer r
+exec sh mk.sh
+stdin commit-r.json
+exitcode 2 hook --for codex
+stderr 'stopped before Bash'
+stderr 'REF_COPY'
+stdin patch-r.json
+exitcode 0 hook --for codex
+stdin patch-gitdir.json
+exitcode 2 hook --for codex
+stderr 'stopped before apply_patch'
+stdin commit-list-r.json
+exitcode 2 hook --for codex
+stdin bad.json
+exitcode 0 hook --for codex
+stderr 'could not read the hook'
+
+
+# a usage mistake only warns, and a Codex warning exits 0
+exitcode 0 hook --for codex extra
+stderr 'letting the call through'
+exitcode 0 hook --bogus --for codex
+exitcode 0 hook --for codex --bogus
+
+-- bad.json --
+{
+-- mk.sh --
+set -e
+printf '{"session_id":"thr","cwd":"%s","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git commit -am x"}}\n' "$WORK/r" > commit-r.json
+printf '{"session_id":"thr","cwd":"%s","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":["bash","-lc","git commit -am x"]}}\n' "$WORK/r" > commit-list-r.json
+printf '{"session_id":"thr","cwd":"%s","hook_event_name":"PreToolUse","tool_name":"apply_patch","tool_input":{"command":"*** Begin Patch\\n*** Update File: note.md\\n@@\\n-a\\n+b\\n*** End Patch\\n"}}\n' "$WORK/r" > patch-r.json
+printf '{"session_id":"thr","cwd":"%s","hook_event_name":"PreToolUse","tool_name":"apply_patch","tool_input":{"command":"*** Begin Patch\\n*** Add File: .git/hooks/post-commit\\n+x\\n*** End Patch\\n"}}\n' "$WORK/r" > patch-gitdir.json

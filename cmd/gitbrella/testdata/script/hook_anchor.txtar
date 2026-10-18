@@ -1,0 +1,61 @@
+# A hook's working tree comes from the git that ran it (git runs commit hooks
+# from the working tree top), not from wherever the hook changed to.
+mkdir shared
+cp hook-gitdir shared/into-gitdir
+cp hook-away shared/away
+chmod 755 shared/into-gitdir
+chmod 755 shared/away
+
+# plain repo, hook changes into .git/hooks: healthy commit passes
+exec git init -q -b main plain
+cp a plain/a
+exec git -C plain add a
+exec git -C plain -c user.name=t -c user.email=t@example.invalid commit -q -m init
+cp hook-gitdir plain/.git/hooks/pre-commit
+chmod 755 plain/.git/hooks/pre-commit
+cp b plain/b
+exec git -C plain add b
+exec git -C plain -c user.name=t -c user.email=t@example.invalid commit -q -m two
+stderr 'INFO   GIT_RUNNING'
+
+# separate git dir, hook changes into the git dir: healthy commit passes
+exec git init -q -b main --separate-git-dir $WORK/sep.git sep
+cp a sep/a
+exec git -C sep add a
+exec git -C sep -c user.name=t -c user.email=t@example.invalid commit -q -m init
+cp hook-gitdir sep.git/hooks/pre-commit
+chmod 755 sep.git/hooks/pre-commit
+cp b sep/b
+exec git -C sep add b
+exec git -C sep -c user.name=t -c user.email=t@example.invalid commit -q -m two
+stderr 'INFO   GIT_RUNNING'
+
+# ... and a deliberate wipe with a hook that leaves the tree is allowed:
+# the working tree is known, and HEAD's files are really gone
+exec git -C sep config core.hooksPath $WORK/shared
+cp shared/away shared/pre-commit
+exec git -C sep rm -r -q .
+exec git -C sep -c user.name=t -c user.email=t@example.invalid commit -q -m 'remove everything'
+
+# ... while an emptied index with the files still there is blocked
+exec git init -q -b main --separate-git-dir $WORK/sep2.git sep2
+cp a sep2/a
+exec git -C sep2 add a
+exec git -C sep2 -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C sep2 config core.hooksPath $WORK/shared
+exec git -C sep2 read-tree --empty
+! exec git -C sep2 -c user.name=t -c user.email=t@example.invalid commit -q --allow-empty -m oops
+stderr 'DAMAGE INDEX_EMPTY'
+
+-- hook-gitdir --
+#!/bin/sh
+cd "$(git rev-parse --git-dir)/hooks" || exit 1
+exec gitbrella check
+-- hook-away --
+#!/bin/sh
+cd "$(dirname "$0")" || exit 1
+exec gitbrella check
+-- a --
+a
+-- b --
+b

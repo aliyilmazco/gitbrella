@@ -1,0 +1,30 @@
+# undo reverses the newest change first: a fix made after a move is undone
+# before the move. git used the index the fix rebuilt: undo leaves it, says
+# so, and finishes, so the move can be undone next.
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+exitcode 0 move-out --apply --watch 0
+exec sh -c 'rm "$(git rev-parse --git-dir)/index"'
+exitcode 0 fix --apply --watch 0
+exec git update-index -q --refresh
+exitcode 0 undo
+stdout 'unfix'
+stdout 'Would stay as it is, it changed after the fix: rebuild-index'
+exitcode 1 undo --apply
+stdout 'unfix'
+stdout 'WARNING left as it is, it changed after the fix: rebuild-index'
+stdout '^done\.'
+exitcode 0 undo
+stdout 'move-in'
+exitcode 0 undo --apply
+exists .git/HEAD
+exitcode 0 check
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one

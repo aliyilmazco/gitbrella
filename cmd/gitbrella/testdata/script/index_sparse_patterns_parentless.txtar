@@ -1,0 +1,35 @@
+# Cone mode on with patterns git accepts as cone patterns (no warning), but
+# without the parent-level lines (/src/ and !/src/*/). git then leaves
+# src/a.txt outside the sparse set, while 'sparse-checkout list' prints the
+# same "src/sub" it prints for a full cone file. A lost index drops
+# src/a.txt; the commit must be blocked.
+exec sh mk.sh r
+exec git -C r sparse-checkout init --cone
+exec git -C r sparse-checkout set src/sub
+cp patterns r/.git/info/sparse-checkout
+exec git -C r sparse-checkout reapply
+! exists r/src/a.txt
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+rm r/.git/index
+exec git -C r add -A
+exec sh -c 'echo e >> r/src/sub/b'
+exec git -C r add -A
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m oops
+stderr 'DAMAGE INDEX_SHRUNK'
+stderr 'src/a.txt'
+
+-- patterns --
+/*
+!/*/
+/src/sub/
+-- mk.sh --
+set -e
+git init -q -b main "$1"
+mkdir -p "$1/src/sub"
+echo r > "$1/README"; echo a > "$1/src/a.txt"; echo b > "$1/src/sub/b"
+git -C "$1" add -A
+git -C "$1" -c user.name=t -c user.email=t@example.invalid commit -q -m init
+-- hook --
+#!/bin/sh
+exec gitbrella check

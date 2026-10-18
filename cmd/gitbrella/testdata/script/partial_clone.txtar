@@ -1,0 +1,7 @@
+# Partial clone: reading a missing object would fetch it from the promisor
+# remote and write a pack into .git. The check must not do that.
+fixture partial-clone pc
+snapshot save before.json pc
+exitcode 1 check pc
+stdout 'DAMAGE REF_COPY  refs/heads/main 2'
+snapshot same before.json pc

@@ -1,0 +1,8 @@
+# A zero-byte loose object is found without reading objects; --deep confirms with fsck.
+fixture empty-object repo
+exitcode 1 check repo
+stdout 'DAMAGE EMPTY_FILE_IN_GITDIR'
+! stdout 'FSCK_ERRORS'
+exitcode 1 check --deep repo
+stdout 'DAMAGE FSCK_ERRORS'
+stdout 'is empty'

@@ -1,0 +1,20 @@
+# A case-only rename of a submodule (git mv in two steps, as a
+# case-insensitive disk needs) is the same directory under a new name. A
+# directory always has more than one link ("." and its parent's entry), so
+# the hard-link rule must not take its identity away.
+exec git init -q -b main up
+exec sh -c 'cd up && echo u > u && git add u && git -c user.name=t -c user.email=t@example.invalid commit -q -m u'
+exec git init -q -b main r
+exec sh -c 'cd r && echo a > a && git add a && git -c protocol.file.allow=always submodule add -q "$WORK/up" Lib && git -c user.name=t -c user.email=t@example.invalid commit -q -m init'
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+exec git -C r mv Lib tmp
+exec git -C r mv tmp lib
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m 'case rename'
+! stderr 'INDEX_SHRUNK'
+exec git -C r ls-tree --name-only HEAD
+stdout '^lib$'
+
+-- hook --
+#!/bin/sh
+exec gitbrella check

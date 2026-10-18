@@ -1,0 +1,47 @@
+# .git as a symlink to a git directory that is itself named .git (one way of
+# moving .git out of a synced folder), used through GIT_DIR from another
+# directory. git then takes that other directory as the working tree, so the
+# tree the tool picks is a guess, and an index with no files blocks the
+# commit, through either direction of the link. (Run from the side that
+# holds none of the files, an emptied index looks like a deliberate wipe:
+# see the README's Limits.)
+exec git init -q -b main proj
+cp src/a proj/a
+exec git -C proj add a
+exec git -C proj -c user.name=t -c user.email=t@example.invalid commit -q -m init
+mkdir store/proj away
+mv proj/.git store/proj/.git
+symlink proj/.git -> $WORK/store/proj/.git
+cp hook store/proj/.git/hooks/pre-commit
+chmod 755 store/proj/.git/hooks/pre-commit
+exec git -C proj read-tree --empty
+
+# committed from elsewhere through the link: blocked, HEAD keeps its file
+! exec sh -c 'cd away && git --git-dir="$WORK/proj/.git" -c user.name=t -c user.email=t@example.invalid commit -q -m oops'
+stderr 'DAMAGE INDEX_EMPTY'
+exec git -C proj ls-tree --name-only HEAD
+stdout '^a$'
+
+# the mirror image: a link elsewhere to a checkout's .git
+exec git init -q -b main real
+cp src/a real/a
+exec git -C real add a
+exec git -C real -c user.name=t -c user.email=t@example.invalid commit -q -m init
+exec git -C real read-tree --empty
+mkdir elsewhere
+symlink elsewhere/.git -> $WORK/real/.git
+
+# run by hand from elsewhere, for both
+cd away
+env GIT_DIR=$WORK/proj/.git
+exitcode 1 check
+stdout 'DAMAGE INDEX_EMPTY'
+env GIT_DIR=$WORK/elsewhere/.git
+exitcode 1 check
+stdout 'DAMAGE INDEX_EMPTY'
+
+-- hook --
+#!/bin/sh
+exec gitbrella check
+-- src/a --
+a

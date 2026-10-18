@@ -1,0 +1,29 @@
+# Hooks in repositories git reaches through GIT_DIR: a dotfiles store driven by
+# --git-dir/--work-tree, and a git dir inside its own worktree (core.worktree).
+# Run without a path, the check uses the GIT_DIR git exports to the hook.
+exec git init -q --bare cfg.git
+cp hook cfg.git/hooks/pre-commit
+chmod 755 cfg.git/hooks/pre-commit
+mkdir home
+cp vimrc home/.vimrc
+exec git --git-dir=$WORK/cfg.git --work-tree=$WORK/home add .vimrc
+exec git --git-dir=$WORK/cfg.git --work-tree=$WORK/home -c user.name=t -c user.email=t@example.invalid commit -q -m dotfiles
+stderr 'INFO   GIT_RUNNING'
+! stderr 'not a git repository'
+
+mkdir a
+exec git init -q a/meta
+exec git -C a/meta config core.worktree $WORK/a
+cp hook a/meta/.git/hooks/pre-commit
+chmod 755 a/meta/.git/hooks/pre-commit
+cp vimrc a/f
+exec git -C a/meta add ../f
+exec git -C a/meta -c user.name=t -c user.email=t@example.invalid commit -q -m f
+stderr 'INFO   GIT_RUNNING'
+! stderr 'not a git repository'
+
+-- hook --
+#!/bin/sh
+exec gitbrella check
+-- vimrc --
+set x

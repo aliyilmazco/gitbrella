@@ -1,0 +1,34 @@
+# history lists every change with its backup; prune-backups deletes only
+# the backups no undo can need, and only with --apply.
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+exitcode 0 history
+stdout 'no change'
+exitcode 0 move-out --apply --watch 0
+exec sh -c 'rm "$(git rev-parse --git-dir)/index"'
+exitcode 0 fix --apply --watch 0
+exitcode 0 history
+stdout 'fix .*done  <- undo reverses this next'
+! stdout 'prune-backups may delete'
+
+# the move is still undoable after the fix is undone: its backup stays
+exitcode 0 undo --apply
+exitcode 0 prune-backups --older-than 0s
+stdout 'move-out .*  <- undo reverses this next'
+stdout 'prune-backups may delete'
+exitcode 0 prune-backups --older-than 0s --apply
+stdout 'backup deleted by prune-backups'
+stdout 'freed'
+exitcode 0 history
+stdout 'move-out .*  <- undo reverses this next\n    backup '
+exitcode 0 undo --apply
+exists .git/HEAD
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one

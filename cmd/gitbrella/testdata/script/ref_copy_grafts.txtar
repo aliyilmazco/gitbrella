@@ -1,0 +1,27 @@
+# info/grafts rewrites history for git commands, and gitbrella reads
+# history to tell whether a ref copy is older than its branch. A graft must
+# not make a copy holding commits the branch lacks look older ("nothing
+# would be lost") when it is not.
+exec git init -q -b main r
+cp files/a r/a
+exec git -C r add a
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m A
+exec git -C r checkout -q -b side
+cp files/x r/x
+exec git -C r add x
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m X
+exec git -C r checkout -q main
+cp files/b r/b
+exec git -C r add b
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m B
+exec sh -c 'cd r && echo "$(git rev-parse main) $(git rev-parse side)" > .git/info/grafts && git rev-parse side > ".git/refs/heads/main 2"'
+exitcode 1 check r
+stdout 'DAMAGE REF_COPY'
+! stdout 'relation: copy-older'
+
+-- files/a --
+a
+-- files/b --
+b
+-- files/x --
+x

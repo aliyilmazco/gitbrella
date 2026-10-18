@@ -1,0 +1,17 @@
+# The check runs as a pre-commit hook. A commit message that mentions
+# "git gitbrella" must not hide the running commit: its index.lock is in use,
+# not left behind.
+fixture clean repo
+cp hook repo/.git/hooks/pre-commit
+chmod 755 repo/.git/hooks/pre-commit
+cp note.md repo/note.md
+exec git -C repo -c user.name=t -c user.email=t@example.invalid commit -q -a -m 'docs: mention git gitbrella in README'
+stderr 'INFO   GIT_RUNNING'
+stderr 'INFO   LOCK_IN_USE  index.lock'
+! stderr 'DAMAGE'
+
+-- hook --
+#!/bin/sh
+exec gitbrella check
+-- note.md --
+changed

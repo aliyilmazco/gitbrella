@@ -1,0 +1,29 @@
+# A commit that would add a sync conflict copy of a tracked file stops at the
+# pre-commit hook; once the copy is unstaged, the commit goes through. A file
+# merely named like a copy, without its original, commits as usual.
+exec git init -q -b main r
+cp note r/note.md
+exec git -C r add note.md
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m init
+cp hook r/.git/hooks/pre-commit
+chmod 755 r/.git/hooks/pre-commit
+
+cp note 'r/note 2.md'
+exec git -C r add 'note 2.md'
+! exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m copy
+stderr 'DAMAGE STAGED_CONFLICT_COPY  note 2.md'
+
+exec git -C r restore --staged 'note 2.md'
+cp note r/other.md
+exec git -C r add other.md
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m other
+
+cp note 'r/plan 2.md'
+exec git -C r add 'plan 2.md'
+exec git -C r -c user.name=t -c user.email=t@example.invalid commit -q -m plan
+
+-- note --
+a note
+-- hook --
+#!/bin/sh
+exec gitbrella check
