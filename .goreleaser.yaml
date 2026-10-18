@@ -73,13 +73,17 @@ homebrew_casks:
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     # the binaries are not notarized: without this, macOS refuses to run a
-    # binary a cask downloaded
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/gitbrella"]
-          end
+    # binary a cask downloaded. Homebrew deprecated the Ruby postflight block
+    # GoReleaser's hooks write (before v2.19), so the step is written here in
+    # Homebrew's postflight_steps form. custom_block is a Go template, so
+    # Homebrew's own {{staged_path}} token (expanded at install time) is
+    # written as a template string.
+    custom_block: |
+      postflight_steps do
+        on_macos do
+          run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{staged_path}}" }}/gitbrella"]
+        end
+      end
 
 release:
   draft: true
