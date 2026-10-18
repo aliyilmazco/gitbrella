@@ -25,7 +25,12 @@ exec git rev-parse --verify refs/gcd-rescue/heads/main-2
 exitcode 0 fix
 stdout '^already\.'
 
-# undo puts the copy back and removes the rescue ref
+# undo puts the copy back and removes the rescue ref; without --apply it
+# only says so
+exitcode 0 undo
+stdout 'unfix'
+stdout '^planned\.'
+exists .git/refs/gcd-rescue/heads/main-2
 exitcode 0 undo --apply
 stdout 'unfix'
 stdout '^done\.'

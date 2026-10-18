@@ -3,6 +3,7 @@ package moveout
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -74,6 +75,25 @@ func TestMoveInRefusesAChangedGitfile(t *testing.T) {
 	os.WriteFile(filepath.Join(l.worktree, ".git"), []byte("gitdir: /else\n"), 0o644)
 	if u := l.planIn(); codes(u.Refusals) != RefuseChangedSince {
 		t.Fatalf("replaced: %+v", u.Refusals)
+	}
+}
+
+// The git directory outside was replaced since the move (a restore from a
+// backup, another tool): undo does not bring back what it did not move.
+func TestMoveInRefusesAReplacedGitDir(t *testing.T) {
+	l := newLab(t)
+	p := l.movedOut()
+	if err := os.Rename(p.Target, p.Target+".old"); err != nil {
+		t.Fatal(err)
+	}
+	if out, err := exec.Command("cp", "-R", p.Target+".old", p.Target).CombinedOutput(); err != nil {
+		t.Fatalf("%v %s", err, out)
+	}
+	if u := l.planIn(); codes(u.Refusals) != RefuseChangedSince {
+		t.Fatalf("%+v", u.Refusals)
+	}
+	if _, err := MoveIn(context.Background(), l.g, l.planIn(), l.opts, l.store); err == nil {
+		t.Fatal("moved in a refused plan")
 	}
 }
 

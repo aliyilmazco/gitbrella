@@ -189,6 +189,31 @@ func TestReadShell(t *testing.T) {
 		"local d=$X/.git; git -C \"$d\" log":                                                                 ":log",
 		"apply_patch <<'EOF'\n*** Begin Patch\n*** Update File: .git/config\n@@\n-a\n+b\n*** End Patch\nEOF": "/w:>git",
 		"apply_patch <<'EOF'\n*** Begin Patch\n*** Update File: notes.md\n@@\n-a\n+b\n*** End Patch\nEOF":    "",
+		// archives and copies that write into .git
+		"tar --create --remove-files -f b.tar dmg/.git/objects": "/w/dmg:>git",
+		"tar --extract -f b.tar -C .git":                        "/w:>git",
+		"tar --get -f b.tar --directory=.git":                   "/w:>git",
+		"tar --list -f b.tar -C .git":                           "",
+		"tar -rf b.tar --remove-files .git/objects":             "/w:>git",
+		"tar --append --remove-files -f b.tar .git/objects":     "/w:>git",
+		"tar --file=.git/b.tar -c x":                            "/w:>git",
+		"unzip b.zip -d .git":                                   "/w:>git",
+		"unzip b.zip -d out":                                    "",
+		"zip .git/x.zip a":                                      "/w:>git",
+		"cp -t .git/hooks pre-commit":                           "/w:>git",
+		"cp --target-directory=.git/hooks pre-commit":           "/w:>git",
+		// GNU xargs -i takes no separate argument: the git after it runs
+		"xargs -i git commit":           "/w:commit",
+		"xargs -i{} git -C {} commit":   ":commit",
+		"stdbuf -i 0 git -C dmg commit": "/w/dmg:commit",
+		"git --work-tree ../ok commit":  "/w:commit /ok:commit",
+		// keywords out of place, arithmetic for: read on
+		"then git commit":                          "/w:commit",
+		"done; git -C dmg commit":                  "/w/dmg:commit",
+		"for ((i=0;i<3;i++)); do git commit; done": "/w:commit",
+		// too long to read: a git in it is an unknown run
+		"git commit " + strings.Repeat("x", 70000): ":?",
+		"echo " + strings.Repeat("x", 70000):       "",
 	} {
 		var got []string
 		for _, r := range readShell(cmd, "/w") {

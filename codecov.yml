@@ -1,0 +1,3 @@
+ignore:
+  - "tools" # the fixture snapshot tool, run by hand
+  - "internal/fixtures" # repositories the tests build

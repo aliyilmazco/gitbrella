@@ -2,6 +2,7 @@ package treecopy
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -131,5 +132,63 @@ func TestCompareWantsDirectories(t *testing.T) {
 	}
 	if _, err := Compare(d, a); err == nil {
 		t.Fatal("a directory compared with a file")
+	}
+}
+
+// A failed copy reports what cp said and leaves no partial copy behind.
+func TestCloneFailureLeavesNothing(t *testing.T) {
+	dst := filepath.Join(t.TempDir(), "dst")
+	err := Clone(context.Background(), filepath.Join(t.TempDir(), "missing"), dst, runtime.GOOS)
+	if err == nil || !strings.Contains(err.Error(), "missing") {
+		t.Fatalf("err = %v, want an error naming the source", err)
+	}
+	if _, err := os.Lstat(dst); err == nil {
+		t.Fatal("a partial copy was left behind")
+	}
+}
+
+// Every kind of difference counts toward the cap of 20, so a copy that went
+// badly wrong still yields a short list.
+func TestCompareListsAtMostTwentyDifferences(t *testing.T) {
+	for name, change := range map[string]func(src, dst, name string){
+		"missing": func(_, d, n string) { os.Remove(filepath.Join(d, n)) },
+		"mode":    func(_, d, n string) { os.Chmod(filepath.Join(d, n), 0o600) },
+		"size":    func(_, d, n string) { os.WriteFile(filepath.Join(d, n), []byte("longer body"), 0o644) },
+		"content": func(s, d, n string) {
+			os.WriteFile(filepath.Join(d, n), []byte("y"), 0o644)
+			info, _ := os.Stat(filepath.Join(s, n))
+			os.Chtimes(filepath.Join(d, n), info.ModTime(), info.ModTime())
+		},
+		"symlink": func(_, d, n string) {
+			os.Remove(filepath.Join(d, n+"-link"))
+			os.Symlink("elsewhere", filepath.Join(d, n+"-link"))
+		},
+		"extra": func(_, d, n string) { os.WriteFile(filepath.Join(d, n+" 2"), nil, 0o644) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			src := filepath.Join(t.TempDir(), "src")
+			os.Mkdir(src, 0o755)
+			var names []string
+			for i := range 30 {
+				n := fmt.Sprintf("f%02d", i)
+				names = append(names, n)
+				os.WriteFile(filepath.Join(src, n), []byte("x"), 0o644)
+				os.Symlink(n, filepath.Join(src, n+"-link"))
+			}
+			dst := filepath.Join(t.TempDir(), "dst")
+			if err := Clone(context.Background(), src, dst, runtime.GOOS); err != nil {
+				t.Fatal(err)
+			}
+			for _, n := range names {
+				change(src, dst, n)
+			}
+			diffs, err := Compare(src, dst)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(diffs) != 20 {
+				t.Fatalf("%d differences listed, want 20: %v", len(diffs), diffs)
+			}
+		})
 	}
 }

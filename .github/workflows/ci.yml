@@ -24,7 +24,11 @@ jobs:
           for t in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
             GOOS=${t%/*} GOARCH=${t#*/} CGO_ENABLED=0 go build -o /dev/null ./cmd/gitbrella
           done
-      - run: go test -race -coverprofile=coverage.out ./...
+      # -coverpkg counts what every test reaches, the CLI scripts included;
+      # each package's profile lists every block, so keep one line per block
+      - run: |
+          go test -race -coverpkg=./... -coverprofile=coverage.raw ./...
+          awk 'NR == 1 { print; next } !($1 in n) || $3 > n[$1] { s[$1] = $2; n[$1] = $3 } END { for (b in n) print b, s[b], n[b] }' coverage.raw > coverage.out
       - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: coverage.out

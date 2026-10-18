@@ -1,0 +1,32 @@
+# Without --apply, move-out and move-out --prepare only say what they would
+# do; flags that exclude each other stop before anything is read.
+exec sh mk.sh
+cd 'Library/Mobile Documents/com~apple~CloudDocs/notes'
+snapshot save $WORK/before.json .
+
+exitcode 0 move-out
+stdout '^planned\.'
+stdout 'move-out --prepare --apply'
+exitcode 0 move-out --prepare
+stdout '^planned\.'
+stdout 'Run again with --apply to copy the git directory'
+snapshot same $WORK/before.json .
+
+exitcode 2 move-out --prepare --attach --json
+stdout '"error": "--prepare and --attach exclude each other"'
+exitcode 2 move-out --bogus
+exitcode 2 undo --bogus
+exitcode 2 fix --bogus
+exitcode 2 history --bogus
+exitcode 2 move-out one two
+stderr 'at most one path'
+snapshot same $WORK/before.json .
+
+-- mk.sh --
+set -e
+d="$WORK/Library/Mobile Documents/com~apple~CloudDocs/notes"
+mkdir -p "$d"
+git init -q -b main "$d"
+echo a > "$d/a.md"
+git -C "$d" add -A
+git -C "$d" -c user.name=t -c user.email=t@example.invalid commit -q -m one

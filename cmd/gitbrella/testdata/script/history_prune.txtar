@@ -6,13 +6,20 @@ exitcode 0 history
 stdout 'no change'
 exitcode 0 move-out --apply --watch 0
 exec sh -c 'rm "$(git rev-parse --git-dir)/index"'
-exitcode 0 fix --apply --watch 0
+exitcode 0 fix --apply --watch 10ms
+! stdout 'brought back'
 exitcode 0 history
 stdout 'fix .*done  <- undo reverses this next'
 ! stdout 'prune-backups may delete'
 
 # the move is still undoable after the fix is undone: its backup stays
 exitcode 0 undo --apply
+# by default only backups older than 30 days go
+exitcode 0 prune-backups
+! stdout 'prune-backups may delete'
+stdout 'Nothing was deleted'
+exitcode 0 history --json
+stdout '"kind": "fix",\n  *"phase": "done",(\n.*)*"prunable": true'
 exitcode 0 prune-backups --older-than 0s
 stdout 'move-out .*  <- undo reverses this next'
 stdout 'prune-backups may delete'

@@ -160,6 +160,20 @@ func TestProcessListFailureNeverCallsLocksStale(t *testing.T) {
 	}
 }
 
+// A git whose folder cannot be read may be working here: its lock is not
+// called stale, and the report says why.
+func TestGitOfUnknownFolderMayHoldTheLock(t *testing.T) {
+	rep := run(t, "stale-lock", func(o *Options) {
+		o.Procs = func(context.Context) ([]procs.Proc, error) { return []procs.Proc{{PID: 7}}, nil }
+	})
+	if got := codes(rep); slices.Contains(got, CodeStaleLock) || !slices.Contains(got, CodeProcessCheckFail) {
+		t.Fatalf("codes = %v", got)
+	}
+	if f := find(t, rep, CodeProcessCheckFail); !strings.Contains(f.Message, "1 git process(es)") {
+		t.Fatalf("message %q", f.Message)
+	}
+}
+
 func TestDatalessSkipsObjectReads(t *testing.T) {
 	rep := run(t, "ref-copy-older", func(o *Options) { o.Flags = suffixDataless("/objects") })
 	if f := find(t, rep, CodeDataless); f.Severity != Damage {

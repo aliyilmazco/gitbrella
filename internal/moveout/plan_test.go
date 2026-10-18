@@ -60,8 +60,14 @@ func TestPlanRefusals(t *testing.T) {
 			os.WriteFile(filepath.Join(l.worktree, ".git", "objects", "info", "alternates"), []byte("/elsewhere\n"), 0o644)
 		}, RefuseAlternates},
 		"target exists": {func(l *lab) { os.MkdirAll(filepath.Join(l.opts.Dirs.GitDirs, l.plan().RepoID), 0o755) }, RefuseTargetExists},
+		"target inside": {func(l *lab) { l.opts.Dirs.GitDirs = filepath.Join(l.worktree, "gitdirs") }, RefuseTargetInside},
+		"target synced": {func(l *lab) {
+			l.opts.Dirs.GitDirs = filepath.Join(filepath.Dir(l.worktree), "gitdirs")
+		}, RefuseTargetSynced},
 		"socket": {func(l *lab) {
-			ln, err := net.Listen("unix", filepath.Join(l.worktree, ".git", "fsmonitor--daemon.ipc"))
+			// a relative name: a socket's full path may be at most ~100 bytes
+			l.t.Chdir(filepath.Join(l.worktree, ".git"))
+			ln, err := net.Listen("unix", "fsmonitor--daemon.ipc")
 			if err != nil {
 				l.t.Skip(err)
 			}

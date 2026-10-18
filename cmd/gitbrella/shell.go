@@ -1082,7 +1082,7 @@ var wrapperOpts = map[string][]string{
 	"nice":       {"-n", "--adjustment"},
 	"ionice":     {"-c", "-n", "-p", "--class", "--classdata"},
 	"stdbuf":     {"-i", "-o", "-e"},
-	"xargs":      {"-I", "-i", "-n", "-P", "-L", "-d", "-E", "-s", "-a", "--replace", "--max-args", "--max-procs", "--delimiter", "--arg-file"},
+	"xargs":      {"-I", "-n", "-P", "-L", "-d", "-E", "-s", "-a", "--replace", "--max-args", "--max-procs", "--delimiter", "--arg-file"},
 	"caffeinate": {"-t", "-w"},
 	"nohup":      {},
 	"command":    {},
@@ -1400,13 +1400,19 @@ read:
 				continue
 			}
 			if slices.Contains(opts, a) {
-				if (a == "-I" || a == "-i") && i+1 < len(w) {
+				if a == "-I" && name == "xargs" && i+1 < len(w) {
 					placeholder = w[i+1]
 				}
 				i += 2
 				continue
 			}
-			if strings.HasPrefix(a, "-I") && len(a) > 2 { // -I{}
+			switch {
+			case name != "xargs":
+			case strings.HasPrefix(a, "-I") && len(a) > 2: // -I{}
+				placeholder = a[2:]
+			case a == "-i": // GNU: -i alone means -I {}
+				placeholder = "{}"
+			case strings.HasPrefix(a, "-i"): // -iSTR: the string attached
 				placeholder = a[2:]
 			}
 			i++

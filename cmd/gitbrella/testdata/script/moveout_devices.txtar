@@ -10,6 +10,9 @@ exists .git/HEAD
 exitcode 1 move-out
 stdout 'REFUSED TARGET_EXISTS'
 exec sh $WORK/arrive.sh
+exitcode 0 move-out --attach
+stdout '^planned\.'
+exists .git
 exitcode 0 move-out --attach --apply
 stdout 'source: +prepared'
 exec git status --porcelain
@@ -17,6 +20,12 @@ stdout 'M a.md'
 
 # a device that was not prepared: no copy here, so it needs --from
 exec sh $WORK/forget.sh
+exitcode 1 move-out --attach
+stdout 'REFUSED NEEDS_SOURCE'
+# a clone that fails sets its remains aside and changes nothing here
+exitcode 2 move-out --attach --from $WORK/nowhere.git --apply --json
+stdout '"result": "failed"'
+stderr 'git clone'
 exitcode 1 move-out --attach
 stdout 'REFUSED NEEDS_SOURCE'
 exitcode 0 move-out --attach --from $WORK/remote.git --apply
