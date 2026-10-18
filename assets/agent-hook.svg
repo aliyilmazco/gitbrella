@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="240" viewBox="0 0 880 240" role="img" aria-label="An AI agent's tool call passes through gitbrella hook: reads and edits go on, git writes and writes into .git in a damaged repository stop with exit 2, and at session start the agent gets one line of context">
+  <style>
+    .l{fill:none;stroke:#1f2328;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    .h{fill:none;stroke:#8c959f;stroke-width:1.2;stroke-dasharray:2 6;stroke-linecap:round}
+    .n{fill:#ffffff;stroke:#1f2328;stroke-width:1.5}
+    .t{fill:#1f2328}
+    .m{fill:#6e7781}
+    .a{fill:#E5482D}
+    .as{fill:none;stroke:#E5482D;stroke-width:1.5;stroke-linecap:round}
+    text{font-family:ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (prefers-color-scheme:dark){.l{stroke:#e6edf3}.h{stroke:#6e7681}.n{fill:#0d1117;stroke:#e6edf3}.t{fill:#e6edf3}.m{fill:#8d96a0}}
+  </style>
+
+  <circle class="n" cx="90" cy="120" r="6"/>
+  <text class="t" x="90" y="98" font-size="13" font-weight="600" text-anchor="middle">tool call</text>
+  <text class="m" x="90" y="146" font-size="12" text-anchor="middle">Claude Code · Codex</text>
+
+  <path class="l" d="M96 120H324"/>
+  <circle class="n" cx="330" cy="120" r="6"/>
+  <text class="t mono" x="330" y="98" font-size="13" text-anchor="middle">gitbrella hook</text>
+  <text class="m" x="330" y="146" font-size="12" text-anchor="middle">reads the command, never runs it</text>
+
+  <path class="l" d="M336 120H440C470 120 470 50 500 50"/>
+  <path class="l" d="M336 120H500"/>
+  <path class="as" d="M440 120C470 120 470 190 500 190"/>
+
+  <circle class="t" cx="506" cy="50" r="4.5"/>
+  <text class="t" x="522" y="46" font-size="13" font-weight="600">goes on</text>
+  <text class="m" x="522" y="65" font-size="12">reading, editing your files, git restore, gitbrella</text>
+
+  <circle class="t" cx="506" cy="120" r="4.5"/>
+  <text class="t" x="522" y="116" font-size="13" font-weight="600">healthy repository</text>
+  <text class="m" x="522" y="135" font-size="12">everything goes on</text>
+
+  <circle class="a" cx="506" cy="190" r="4.5"/>
+  <text class="a" x="522" y="186" font-size="13" font-weight="600">stopped, exit 2</text>
+  <text class="m" x="522" y="205" font-size="12">in a damaged repository: git writes and writes into .git</text>
+</svg>

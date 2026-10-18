@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="400" viewBox="0 0 880 400" role="img" aria-label="gitbrella check output: one INDEX_COPY damage and one IN_CLOUD_FOLDER info">
+  <style>
+    .bg{fill:#f6f8fa;stroke:#d0d7de}
+    .dot{fill:#d0d7de}
+    .t{fill:#1f2328}
+    .m{fill:#6e7781}
+    .a{fill:#E5482D}
+    text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;font-size:13px;white-space:pre}
+    @media (prefers-color-scheme:dark){.bg{fill:#161b22;stroke:#30363d}.dot{fill:#30363d}.t{fill:#e6edf3}.m{fill:#8d96a0}}
+  </style>
+  <rect class="bg" x="0.5" y="0.5" width="879" height="399" rx="12"/>
+  <circle class="dot" cx="22" cy="20" r="5"/>
+  <circle class="dot" cx="38" cy="20" r="5"/>
+  <circle class="dot" cx="54" cy="20" r="5"/>
+  <g xml:space="preserve">
+    <text x="24" y="60"><tspan class="m">$ </tspan><tspan class="t" font-weight="600">gitbrella check</tspan></text>
+    <text class="m" x="24" y="84">gitbrella v1.0.0</text>
+    <text x="24" y="104"><tspan class="m">repository: </tspan><tspan class="t">/Users/jane/Library/Mobile Documents/com~apple~CloudDocs/notes</tspan></text>
+    <text x="24" y="124"><tspan class="m">git dir:    </tspan><tspan class="t">/Users/jane/Library/Mobile Documents/com~apple~CloudDocs/notes/.git</tspan></text>
+    <text x="24" y="144"><tspan class="m">sync:       </tspan><tspan class="t">icloud</tspan></text>
+    <text x="24" y="178"><tspan class="a" font-weight="700">DAMAGE</tspan><tspan class="t" font-weight="600"> INDEX_COPY</tspan><tspan class="t">  index 2</tspan></text>
+    <text class="t" x="24" y="198">       icloud conflict copy of index</text>
+    <text class="t" x="24" y="218">       repair: 'gitbrella fix' repairs it</text>
+    <text class="m" x="24" y="238">       equalsHEAD: true</text>
+    <text class="m" x="24" y="258">       kind: icloud</text>
+    <text class="m" x="24" y="278">       original: index</text>
+    <text class="m" x="24" y="298">       originalExists: true</text>
+    <text class="m" x="24" y="318">       validIndex: true</text>
+    <text x="24" y="338"><tspan class="t" font-weight="700">INFO  </tspan><tspan class="t" font-weight="600"> IN_CLOUD_FOLDER</tspan><tspan class="m">  /Users/jane/Library/Mobile Documents/com~apple~CloudDocs/notes</tspan></text>
+    <text class="m" x="24" y="358">       repository is inside a folder synced by icloud; moving .git out of it prevents this damage</text>
+    <text class="t" x="24" y="384">1 damage, 1 info. gitbrella changed nothing.</text>
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="gitbrella">
+  <style>
+    .l{fill:none;stroke:#1f2328;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    .r{fill:none;stroke:#1f2328;stroke-width:2.2;stroke-linecap:round;opacity:.55}
+    .a{fill:#E5482D}
+    @media (prefers-color-scheme:dark){.l,.r{stroke:#e6edf3}}
+  </style>
+  <path class="r" d="M84 22v8M100 14v10M116 22v8"/>
+  <path class="l" d="M100 40v8"/>
+  <path class="l" d="M38 110C46 72 70 50 100 48s54 24 62 62"/>
+  <path class="l" d="M38 110q18-14 36 0q26-14 52 0q18-14 36 0"/>
+  <path class="l" d="M100 48C84 62 76 84 74 110M100 48c16 14 24 36 26 62"/>
+  <path class="l" d="M100 104v46l15 18"/>
+  <circle class="a" cx="100" cy="128" r="5"/>
+  <circle class="a" cx="100" cy="150" r="5"/>
+  <circle class="a" cx="116" cy="169" r="5"/>
+</svg>

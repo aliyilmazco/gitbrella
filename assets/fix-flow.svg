@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="240" viewBox="0 0 880 240" role="img" aria-label="fix shows the plan, fix --apply records each step before acting, the check runs again: clean means done, otherwise the steps are reversed; undo --apply reverses the newest change">
+  <style>
+    .l{fill:none;stroke:#1f2328;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    .d{fill:none;stroke:#8c959f;stroke-width:1.2;stroke-dasharray:4 5;stroke-linecap:round}
+    .n{fill:#ffffff;stroke:#1f2328;stroke-width:1.5}
+    .t{fill:#1f2328}
+    .m{fill:#6e7781}
+    .a{fill:#E5482D}
+    .as{fill:none;stroke:#E5482D;stroke-width:1.5;stroke-linecap:round}
+    text{font-family:ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (prefers-color-scheme:dark){.l{stroke:#e6edf3}.d{stroke:#6e7681}.n{fill:#0d1117;stroke:#e6edf3}.t{fill:#e6edf3}.m{fill:#8d96a0}}
+  </style>
+  <path class="l" d="M80 90H620"/>
+  <path class="l" d="M620 90C650 90 650 50 680 50"/>
+  <path class="as" d="M620 90C650 90 650 130 680 130"/>
+  <circle class="n" cx="80" cy="90" r="6"/>
+  <circle class="n" cx="300" cy="90" r="6"/>
+  <circle class="n" cx="520" cy="90" r="6"/>
+  <g font-size="13" text-anchor="middle">
+    <text class="t mono" x="80" y="70">fix</text>
+    <text class="t mono" x="300" y="70">fix --apply</text>
+    <text class="t" x="520" y="70" font-weight="600">check again</text>
+  </g>
+  <g font-size="12" text-anchor="middle">
+    <text class="m" x="80" y="118">the plan; nothing changes</text>
+    <text class="m" x="300" y="118">each step recorded before it acts</text>
+    <text class="m" x="520" y="118">what it repaired must be gone</text>
+  </g>
+
+  <circle class="t" cx="686" cy="50" r="4.5"/>
+  <text class="t" x="702" y="46" font-size="13" font-weight="600">done</text>
+  <text class="m" x="702" y="65" font-size="12">moved files kept in a backup</text>
+
+  <circle class="a" cx="686" cy="130" r="4.5"/>
+  <text class="a" x="702" y="126" font-size="13" font-weight="600">rolled back</text>
+  <text class="m" x="702" y="145" font-size="12">still damaged, or new damage</text>
+
+  <path class="d" d="M686 160C686 205 640 210 560 210H96M104 204l-8 6 8 6"/>
+  <text class="m mono" x="390" y="200" font-size="12" text-anchor="middle">undo --apply  reverses the newest change</text>
+</svg>

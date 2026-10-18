@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="220" viewBox="0 0 880 220" role="img" aria-label="Three steps: prepare on each other device, move out on one device, attach on each other device once the .git file has arrived">
+  <style>
+    .h{fill:none;stroke:#d0d7de;stroke-width:1}
+    .n{fill:#ffffff;stroke:#1f2328;stroke-width:1.5}
+    .t{fill:#1f2328}
+    .m{fill:#6e7781}
+    .a{fill:#E5482D}
+    .big{font-size:44px;font-weight:200;fill:#d0d7de}
+    text{font-family:ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (prefers-color-scheme:dark){.h{stroke:#30363d}.n{fill:#0d1117;stroke:#e6edf3}.t{fill:#e6edf3}.m{fill:#8d96a0}.big{fill:#30363d}}
+  </style>
+  <path class="h" d="M150 92H730"/>
+  <circle class="n" cx="150" cy="92" r="6"/>
+  <circle class="a" cx="440" cy="92" r="6"/>
+  <circle class="n" cx="730" cy="92" r="6"/>
+
+  <g text-anchor="middle">
+    <text class="big" x="150" y="62">1</text>
+    <text class="big" x="440" y="62">2</text>
+    <text class="big" x="730" y="62">3</text>
+
+    <text class="t" x="150" y="128" font-size="13" font-weight="600">each other device</text>
+    <text class="t" x="440" y="128" font-size="13" font-weight="600">one device</text>
+    <text class="t" x="730" y="128" font-size="13" font-weight="600">each other device</text>
+
+    <text class="t mono" x="150" y="154" font-size="12">move-out --prepare --apply</text>
+    <text class="a mono" x="440" y="154" font-size="12">move-out --apply</text>
+    <text class="t mono" x="730" y="154" font-size="12">move-out --attach --apply</text>
+
+    <text class="m" x="150" y="178" font-size="12">copies its .git to where</text>
+    <text class="m" x="150" y="195" font-size="12">the .git file will point</text>
+    <text class="m" x="440" y="178" font-size="12">moves .git out and writes</text>
+    <text class="m" x="440" y="195" font-size="12">the .git file the sync carries</text>
+    <text class="m" x="730" y="178" font-size="12">once the .git file has arrived;</text>
+    <text class="m" x="730" y="195" font-size="12">the working tree is not touched</text>
+  </g>
+</svg>

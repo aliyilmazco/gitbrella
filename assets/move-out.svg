@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="300" viewBox="0 0 940 300" role="img" aria-label="move-out moves .git out of the synced folder and leaves a .git file pointing at it">
+  <style>
+    .l{fill:none;stroke:#1f2328;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    .b{fill:none;stroke:#8c959f;stroke-width:1.2;stroke-dasharray:4 5}
+    .t{fill:#1f2328}
+    .m{fill:#6e7781}
+    .a{fill:#E5482D}
+    .as{fill:none;stroke:#E5482D;stroke-width:1.5;stroke-linecap:round}
+    text{font-family:ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (prefers-color-scheme:dark){.l{stroke:#e6edf3}.b{stroke:#6e7681}.t{fill:#e6edf3}.m{fill:#8d96a0}}
+  </style>
+
+  <text class="t" x="80" y="26" font-size="13" font-weight="600" letter-spacing="1.5">BEFORE</text>
+  <rect class="b" x="80" y="40" width="300" height="190" rx="14"/>
+  <text class="m" x="102" y="68" font-size="11" letter-spacing=".5">synced folder</text>
+  <g class="mono" font-size="13">
+    <text class="t" x="102" y="104">notes/</text>
+    <text class="t" x="126" y="132">notes.md</text>
+    <text class="t" x="126" y="156">src/</text>
+    <text class="a" x="126" y="184">.git/</text>
+  </g>
+  <text class="m" x="176" y="184" font-size="12">synced file by file</text>
+
+  <path class="l" d="M410 135H500M492 129l8 6-8 6"/>
+  <text class="m mono" x="455" y="122" font-size="12" text-anchor="middle">move-out</text>
+
+  <text class="t" x="530" y="26" font-size="13" font-weight="600" letter-spacing="1.5">AFTER</text>
+  <rect class="b" x="530" y="40" width="300" height="190" rx="14"/>
+  <text class="m" x="552" y="68" font-size="11" letter-spacing=".5">synced folder</text>
+  <g class="mono" font-size="13">
+    <text class="t" x="552" y="104">notes/</text>
+    <text class="t" x="576" y="132">notes.md</text>
+    <text class="t" x="576" y="156">src/</text>
+    <text class="t" x="576" y="184">.git</text>
+  </g>
+  <text class="m mono" x="620" y="184" font-size="11">gitdir: ../../…</text>
+
+  <path class="as" d="M586 194V262"/>
+  <circle class="a" cx="586" cy="270" r="4"/>
+  <text class="t mono" x="602" y="274" font-size="12">~/.local/share/gitbrella/gitdirs/notes-1a2b3c4d/</text>
+  <text class="m" x="602" y="294" font-size="11" letter-spacing=".5">history, outside the synced folder</text>
+</svg>

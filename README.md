@@ -1,12 +1,52 @@
-# gitbrella
+<p align="center">
+  <img src="assets/logo.svg" width="132" alt="gitbrella logo: an umbrella whose handle is a git branch">
+</p>
 
-[![ci](https://github.com/aliyilmazco/gitbrella/actions/workflows/ci.yml/badge.svg)](https://github.com/aliyilmazco/gitbrella/actions/workflows/ci.yml)
-[![release](https://img.shields.io/github/v/release/aliyilmazco/gitbrella)](https://github.com/aliyilmazco/gitbrella/releases)
-[![Go Reference](https://pkg.go.dev/badge/github.com/aliyilmazco/gitbrella.svg)](https://pkg.go.dev/github.com/aliyilmazco/gitbrella)
-[![license](https://img.shields.io/github/license/aliyilmazco/gitbrella)](LICENSE)
+<h1 align="center">gitbrella</h1>
 
-Finds the damage that cloud sync does to git repositories, without changing
-anything and without downloading anything.
+<p align="center">
+  Finds the damage that cloud sync does to git repositories,<br>
+  without changing anything and without downloading anything.
+</p>
+
+<p align="center">
+  <a href="https://github.com/aliyilmazco/gitbrella/actions/workflows/ci.yml"><img src="https://github.com/aliyilmazco/gitbrella/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="https://github.com/aliyilmazco/gitbrella/releases"><img src="https://img.shields.io/github/v/release/aliyilmazco/gitbrella" alt="release"></a>
+  <a href="https://pkg.go.dev/github.com/aliyilmazco/gitbrella"><img src="https://pkg.go.dev/badge/github.com/aliyilmazco/gitbrella.svg" alt="Go Reference"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/aliyilmazco/gitbrella" alt="license"></a>
+</p>
+
+<p align="center">
+  <b>English</b> ·
+  <a href="docs/i18n/README.zh-CN.md">简体中文</a> ·
+  <a href="docs/i18n/README.zh-TW.md">繁體中文</a> ·
+  <a href="docs/i18n/README.ja.md">日本語</a> ·
+  <a href="docs/i18n/README.ko.md">한국어</a> ·
+  <a href="docs/i18n/README.es.md">Español</a> ·
+  <a href="docs/i18n/README.pt-BR.md">Português</a> ·
+  <a href="docs/i18n/README.fr.md">Français</a> ·
+  <a href="docs/i18n/README.de.md">Deutsch</a> ·
+  <a href="docs/i18n/README.it.md">Italiano</a> ·
+  <a href="docs/i18n/README.ru.md">Русский</a> ·
+  <a href="docs/i18n/README.uk.md">Українська</a> ·
+  <a href="docs/i18n/README.pl.md">Polski</a> ·
+  <a href="docs/i18n/README.tr.md">Türkçe</a> ·
+  <a href="docs/i18n/README.ar.md">العربية</a> ·
+  <a href="docs/i18n/README.hi.md">हिन्दी</a> ·
+  <a href="docs/i18n/README.id.md">Bahasa Indonesia</a> ·
+  <a href="docs/i18n/README.vi.md">Tiếng Việt</a>
+</p>
+
+<p align="center">
+  <a href="#usage">Usage</a> ·
+  <a href="#repairing">Repairing</a> ·
+  <a href="#moving-git-out-of-the-synced-folder">Moving .git out</a> ·
+  <a href="#what-it-reports">What it reports</a> ·
+  <a href="#install">Install</a> ·
+  <a href="#limits">Limits</a>
+</p>
+
+<br>
 
 iCloud Drive, Dropbox, OneDrive, Google Drive and Syncthing sync files one by
 one. Git expects its `.git` directory to change as a whole, so repositories in
@@ -17,6 +57,10 @@ repository in a synced folder, but defaults keep putting them there: macOS
 Desktop & Documents in iCloud, Windows folder backup to OneDrive,
 `Documents/GitHub`.
 
+<p align="center">
+  <img src="assets/sync-damage.svg" width="820" alt="Sync clients copy .git between devices one file at a time and leave conflict copies such as index 2 and refs/heads/main 2, an index.lock next to a lost index, and objects that exist only in the cloud">
+</p>
+
 `gitbrella check` tells you, typically in under a second, whether a
 repository has that damage. It is meant to run before an AI agent or a git hook
 touches the repository. `gitbrella fix` repairs what has one right
@@ -24,22 +68,64 @@ repair, and `gitbrella move-out` ends the damage for good:
 it moves `.git` out of the synced folder and leaves a `.git` file pointing at
 it, so the sync client carries your files and git keeps its history to itself.
 
+| Command | What it does |
+| --- | --- |
+| `gitbrella check` | reports the damage; read-only |
+| `gitbrella fix` | repairs what has one right answer |
+| `gitbrella move-out` | moves `.git` out of the synced folder for good |
+| `gitbrella undo` | reverses the newest fix or move |
+| `gitbrella history` | lists the changes made on this device |
+| `gitbrella prune-backups` | deletes old backups of changes that cannot be undone |
+| `gitbrella hook --for claude\|codex` | guards AI agents' tool calls |
+
+## Quick start
+
+**1. Look.** Read-only, no downloads, no network:
+
+```sh
+cd ~/Library/Mobile\ Documents/com~apple~CloudDocs/notes
+gitbrella check               # exit 0: healthy, 1: damage, 2: could not run
+```
+
+**2. Repair** what has one right answer. Without `--apply` it only shows the plan:
+
+```sh
+gitbrella fix                 # what it would repair, and what it leaves to you
+gitbrella fix --apply         # repair; `gitbrella undo --apply` puts it back
+```
+
+**3. End it for good.** Move `.git` out of the synced folder:
+
+```sh
+gitbrella move-out            # what would happen, and what stops it
+gitbrella move-out --apply
+```
+
+**Keep it guarded.** Block commits in a damaged repository:
+
+```sh
+printf '#!/bin/sh\nexec gitbrella check\n' > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+For AI agents, see [For agents](#for-agents).
+
 ## What it promises
 
-- **`check` is read-only.** It never writes to the repository. Git runs with
+- <img src="assets/icons/read-only.svg" width="18" alt=""> **`check` is read-only.** It never writes to the repository. Git runs with
   `GIT_OPTIONAL_LOCKS=0`, automatic gc and maintenance off, and only commands
   that read. End-to-end tests for the risky cases (index copies, a missing
   index, partial clones, split indexes, moved git directories) record every
   file's size, mtime and inode before and after the check and require them to
   match.
-- **No cloud downloads.** On macOS it turns off on-demand downloading for its
+- <img src="assets/icons/no-download.svg" width="18" alt=""> **No cloud downloads.** On macOS it turns off on-demand downloading for its
   own process (and the git it starts) before touching the disk; if macOS
   refuses, the check does not run (exit 2). Files that exist only in iCloud are
   reported, not fetched.
-- **No network.** Partial clones never fetch missing objects
+- <img src="assets/icons/no-network.svg" width="18" alt=""> **No network.** Partial clones never fetch missing objects
   (`GIT_NO_LAZY_FETCH`). On git older than 2.45 object checks are skipped
   instead.
-- **Quiet on healthy repositories.** A lock is damage only when it is old and no
+- <img src="assets/icons/quiet.svg" width="18" alt=""> **Quiet on healthy repositories.** A lock is damage only when it is old and no
   git working on the repository (in any of its worktrees) could have written
   it: git creates a lock when it takes it, so a git that started later cannot
   hold it. Git's temporary files and other tools' files in `.git` are
@@ -69,6 +155,13 @@ instead of detecting it from the path: `auto` (the default), `icloud`,
 same `--provider`: give them the one you gave `check`, since some copy names
 count only for a given client. The JSON says `"providerForced": true` then.
 
+<p align="center">
+  <img src="assets/check-output.svg" width="820" alt="gitbrella check output: DAMAGE INDEX_COPY index 2, repairable by gitbrella fix, and INFO IN_CLOUD_FOLDER">
+</p>
+
+<details>
+<summary>The same output as text</summary>
+
 ```
 $ gitbrella check
 gitbrella v1.0.0
@@ -90,6 +183,8 @@ INFO   IN_CLOUD_FOLDER  /Users/jane/Library/Mobile Documents/com~apple~CloudDocs
 1 damage, 1 info. gitbrella changed nothing.
 ```
 
+</details>
+
 ### As a git hook
 
 ```sh
@@ -97,6 +192,10 @@ INFO   IN_CLOUD_FOLDER  /Users/jane/Library/Mobile Documents/com~apple~CloudDocs
 # .git/hooks/pre-commit
 exec gitbrella check
 ```
+
+<p align="center">
+  <img src="assets/hook-flow.svg" width="820" alt="git commit runs the pre-commit hook, which runs gitbrella check: exit 0 lets the commit go ahead, exit 1 or 2 blocks it">
+</p>
 
 A damaged repository blocks the commit; a healthy one commits as usual. The
 tool knows git is running the hook and does not mistake the commit's own lock
@@ -161,6 +260,10 @@ show the findings to the user.
 Agents' own hooks stop a tool call only on exit 2: an exit 1 ("damage found")
 lets the call go ahead. `gitbrella hook --for claude|codex` speaks
 their hooks. It reads the event the agent passes on stdin:
+
+<p align="center">
+  <img src="assets/agent-hook.svg" width="820" alt="An agent's tool call passes through gitbrella hook: reads and edits go on; in a damaged repository git writes and writes into .git stop with exit 2">
+</p>
 
 - **Before a tool call** (`PreToolUse`): in a damaged repository, a git
   command that writes (commit, add, reset, rebase, push, and anything not
@@ -257,6 +360,10 @@ gitbrella history             # the changes made here, their backups and sizes
 gitbrella prune-backups       # which backups no undo can need any more
 ```
 
+<p align="center">
+  <img src="assets/fix-flow.svg" width="820" alt="fix shows the plan; fix --apply records each step, then the check runs again: done, or rolled back; undo --apply reverses the newest change">
+</p>
+
 `check` says under each damage whether `fix` repairs it (`repair:`, and
 `"repair": "fix"` or `"manual"` in the JSON), naming `fix --provider NAME`
 when the check was given one; inside commit hooks it does not ask.
@@ -345,6 +452,10 @@ gitbrella move-out --apply    # do it
 gitbrella undo --apply        # move it back
 ```
 
+<p align="center">
+  <img src="assets/move-out.svg" width="860" alt="Before: .git inside the synced folder. After move-out: a .git file in the synced folder points at ~/.local/share/gitbrella/gitdirs/notes-1a2b3c4d, outside it">
+</p>
+
 `move-out` copies `.git` to `~/.local/share/gitbrella/gitdirs/<name>`
 (an APFS clone on macOS: no space is used), proves the copy identical file by
 file, moves the original into a backup under
@@ -394,6 +505,10 @@ moved as it is and listed as carried: run `check` again afterwards.
 
 The sync client deletes `.git` on every other device that syncs the folder
 and brings the `.git` file instead. To keep their history:
+
+<p align="center">
+  <img src="assets/other-devices.svg" width="820" alt="1: on each other device, move-out --prepare --apply. 2: on one device, move-out --apply. 3: on each other device, move-out --attach --apply">
+</p>
 
 1. On each other device, before the move: `gitbrella move-out --prepare --apply`
    copies its `.git` to where the `.git` file will point.

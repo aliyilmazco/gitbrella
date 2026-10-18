@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+  <style>.l{fill:none;stroke:#1f2328;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}@media (prefers-color-scheme:dark){.l{stroke:#e6edf3}}</style>
+  <path class="l" d="M12 3l7 2.8v5.7c0 4.3-2.9 7.6-7 9-4.1-1.4-7-4.7-7-9V5.8z"/>
+  <path d="M9 12l2.2 2.2L15.2 10" fill="none" stroke="#E5482D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

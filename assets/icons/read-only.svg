@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+  <style>.l{fill:none;stroke:#1f2328;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}@media (prefers-color-scheme:dark){.l{stroke:#e6edf3}}</style>
+  <path class="l" d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/>
+  <circle cx="12" cy="12" r="2.6" fill="#E5482D"/>
+</svg>

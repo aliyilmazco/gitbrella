@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="200" viewBox="0 0 880 200" role="img" aria-label="git commit runs the pre-commit hook, which runs gitbrella check: exit 0 lets the commit go ahead, any other exit blocks it">
+  <style>
+    .l{fill:none;stroke:#1f2328;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    .n{fill:#ffffff;stroke:#1f2328;stroke-width:1.5}
+    .t{fill:#1f2328}
+    .m{fill:#6e7781}
+    .a{fill:#E5482D}
+    .as{fill:none;stroke:#E5482D;stroke-width:1.5;stroke-linecap:round}
+    text{font-family:ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (prefers-color-scheme:dark){.l{stroke:#e6edf3}.n{fill:#0d1117;stroke:#e6edf3}.t{fill:#e6edf3}.m{fill:#8d96a0}}
+  </style>
+  <path class="l" d="M80 100H560"/>
+  <path class="l" d="M560 100C600 100 600 60 640 60H680"/>
+  <path class="as" d="M560 100C600 100 600 140 640 140H680"/>
+
+  <circle class="n" cx="80" cy="100" r="6"/>
+  <circle class="n" cx="300" cy="100" r="6"/>
+  <circle class="n" cx="520" cy="100" r="6"/>
+  <g font-size="13" text-anchor="middle">
+    <text class="t mono" x="80" y="80">git commit</text>
+    <text class="t mono" x="300" y="80">pre-commit hook</text>
+    <text class="t mono" x="520" y="80">gitbrella check</text>
+  </g>
+  <g font-size="12" text-anchor="middle">
+    <text class="m" x="80" y="128">you, or a tool</text>
+    <text class="m" x="300" y="128">exec gitbrella check</text>
+    <text class="m" x="520" y="128">read-only</text>
+  </g>
+
+  <circle class="t" cx="686" cy="60" r="4.5"/>
+  <text class="t mono" x="702" y="56" font-size="13">exit 0</text>
+  <text class="m" x="702" y="75" font-size="12">the commit goes ahead</text>
+
+  <circle class="a" cx="686" cy="140" r="4.5"/>
+  <text class="a mono" x="702" y="136" font-size="13">exit 1 or 2</text>
+  <text class="m" x="702" y="155" font-size="12">the commit is blocked</text>
+</svg>

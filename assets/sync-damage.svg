@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="260" viewBox="0 0 880 260" role="img" aria-label="Sync clients copy .git between devices one file at a time and leave conflict copies, a lost index and cloud-only objects">
+  <style>
+    .l{fill:none;stroke:#1f2328;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    .h{fill:none;stroke:#d0d7de;stroke-width:1}
+    .d{fill:none;stroke:#8c959f;stroke-width:1.2;stroke-dasharray:2 6;stroke-linecap:round}
+    .t{fill:#1f2328}
+    .m{fill:#6e7781}
+    .a{fill:#E5482D}
+    text{font-family:ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media (prefers-color-scheme:dark){.l{stroke:#e6edf3}.h{stroke:#30363d}.d{stroke:#6e7681}.t{fill:#e6edf3}.m{fill:#8d96a0}}
+  </style>
+
+  <path class="l" d="M110 66h26l8 8h46v46h-80z"/>
+  <text class="t mono" x="150" y="104" font-size="13" text-anchor="middle">.git</text>
+  <text class="m" x="150" y="142" font-size="12" text-anchor="middle">this device</text>
+
+  <path class="l" d="M690 66h26l8 8h46v46h-80z"/>
+  <text class="t mono" x="730" y="104" font-size="13" text-anchor="middle">.git</text>
+  <text class="m" x="730" y="142" font-size="12" text-anchor="middle">another device</text>
+
+  <path class="l" d="M418 112a17 17 0 0 1 1-34a24 24 0 0 1 45-5a19 19 0 0 1 4 39z"/>
+  <text class="m" x="440" y="142" font-size="12" text-anchor="middle">sync client</text>
+
+  <path class="d" d="M206 94H392M488 94H674"/>
+  <text class="m" x="299" y="82" font-size="11" text-anchor="middle" letter-spacing=".5">file by file</text>
+  <text class="m" x="581" y="82" font-size="11" text-anchor="middle" letter-spacing=".5">file by file</text>
+
+  <path class="h" d="M110 182H770"/>
+  <circle class="a" cx="150" cy="182" r="3.5"/>
+  <circle class="a" cx="343" cy="182" r="3.5"/>
+  <circle class="a" cx="537" cy="182" r="3.5"/>
+  <circle class="a" cx="730" cy="182" r="3.5"/>
+  <g font-size="13" text-anchor="middle">
+    <text class="a mono" x="150" y="214">index 2</text>
+    <text class="a mono" x="343" y="214">refs/heads/main 2</text>
+    <text class="a mono" x="537" y="214">index.lock</text>
+    <text class="a mono" x="730" y="214">objects/…</text>
+  </g>
+  <g font-size="12" text-anchor="middle">
+    <text class="m" x="150" y="236">conflict copies</text>
+    <text class="m" x="343" y="236">copied branches</text>
+    <text class="m" x="537" y="236">a lost index</text>
+    <text class="m" x="730" y="236">objects only in the cloud</text>
+  </g>
+</svg>
