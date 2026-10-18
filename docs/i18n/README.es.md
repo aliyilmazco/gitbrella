@@ -364,6 +364,10 @@ Cuando la ruta no es en absoluto un repositorio, dice por qué si la causa está
 Requiere git 2.31 o posterior. macOS y Linux, amd64 y arm64, sin cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

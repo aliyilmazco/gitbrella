@@ -364,6 +364,10 @@ Quando il percorso non è affatto un repository, dice perché se la causa è sul
 Richiede git 2.31 o successivo. macOS e Linux, amd64 e arm64, senza cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

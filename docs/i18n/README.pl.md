@@ -364,6 +364,10 @@ Gdy ścieżka w ogóle nie jest repozytorium, mówi dlaczego, jeśli przyczyna j
 Wymaga gita 2.31 lub nowszego. macOS i Linux, amd64 i arm64, bez cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

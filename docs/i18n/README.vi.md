@@ -364,6 +364,10 @@ Nếu đường dẫn hoàn toàn không phải kho, lý do được báo cáo k
 Cần git 2.31 trở lên. macOS và Linux, amd64 và arm64, không cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

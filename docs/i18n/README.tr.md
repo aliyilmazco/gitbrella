@@ -364,6 +364,10 @@ Yol hiç depo değilse, neden diskteyse nedenini söyler: yeniden adlandırılm�
 git 2.31 veya daha yenisini gerektirir. macOS ve Linux, amd64 ve arm64, cgo yok.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

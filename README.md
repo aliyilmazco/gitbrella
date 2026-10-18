@@ -587,6 +587,10 @@ answering for an enclosing repository, which is what git itself would do.
 Requires git 2.31 or newer. macOS and Linux, amd64 and arm64, no cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

@@ -364,6 +364,10 @@ Quando o caminho não é um repositório, ele diz por quê, se a causa estiver n
 Requer git 2.31 ou mais novo. macOS e Linux, amd64 e arm64, sem cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

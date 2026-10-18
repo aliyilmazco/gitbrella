@@ -364,6 +364,10 @@ gitbrella undo --apply        # вернуть обратно
 Требуется git 2.31 или новее. macOS и Linux, amd64 и arm64, без cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

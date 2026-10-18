@@ -364,6 +364,10 @@ Ist der Pfad gar kein Repository, sagt es warum, wenn die Ursache auf der Platte
 Erfordert git 2.31 oder neuer. macOS und Linux, amd64 und arm64, kein cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

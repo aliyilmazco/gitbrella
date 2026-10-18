@@ -364,6 +364,10 @@ gitbrella undo --apply        # 되돌리기
 git 2.31 이상이 필요합니다. macOS와 Linux, amd64와 arm64를 지원하며 cgo를 쓰지 않습니다.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

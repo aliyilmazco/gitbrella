@@ -364,6 +364,10 @@ gitbrella undo --apply        # move it back
 يتطلب git 2.31 أو أحدث. يعمل على macOS وLinux، بمعماريتي amd64 وarm64، بلا cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

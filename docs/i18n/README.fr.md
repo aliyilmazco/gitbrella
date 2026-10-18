@@ -364,6 +364,10 @@ Quand le chemin n'est pas du tout un dépôt, il dit pourquoi si la cause est su
 Nécessite git 2.31 ou plus récent. macOS et Linux, amd64 et arm64, sans cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 

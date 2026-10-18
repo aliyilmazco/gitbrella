@@ -56,6 +56,31 @@ changelog:
   use: git
   sort: asc
 
+# A Homebrew cask in github.com/aliyilmazco/homebrew-tap, for
+# 'brew install aliyilmazco/tap/gitbrella'. It is pushed while the release is
+# still a draft and points at the release's archives, so 'brew install' fails
+# until the draft is published; a prerelease tag (v1.2.3-rc1) is not pushed.
+# HOMEBREW_TAP_TOKEN is a fine-grained token with contents write on the tap
+# alone: the workflow's own token cannot write to another repository.
+homebrew_casks:
+  - name: gitbrella
+    binaries: [gitbrella]
+    homepage: https://github.com/aliyilmazco/gitbrella
+    description: Finds the damage cloud sync does to git repositories
+    skip_upload: auto
+    repository:
+      owner: aliyilmazco
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    # the binaries are not notarized: without this, macOS refuses to run a
+    # binary a cask downloaded
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/gitbrella"]
+          end
+
 release:
   draft: true
   # a re-run for the same tag replaces its draft instead of adding another

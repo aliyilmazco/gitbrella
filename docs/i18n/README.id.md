@@ -364,6 +364,10 @@ Jika path sama sekali bukan repositori, alasannya dilaporkan bila penyebabnya ad
 Membutuhkan git 2.31 atau lebih baru. macOS dan Linux, amd64 dan arm64, tanpa cgo.
 
 ```
+brew install aliyilmazco/tap/gitbrella
+```
+
+```
 go install github.com/aliyilmazco/gitbrella/cmd/gitbrella@latest
 ```
 
