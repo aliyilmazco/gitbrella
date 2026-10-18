@@ -1,3 +1,4 @@
 /gitbrella
 /dist/
 *.snap.json
+.puq/
